@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { createRoot } from '@wordpress/element';
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useState, useCallback, useMemo } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 
 /**
@@ -12,10 +12,12 @@ import STORE_NAME from '../store';
 import SessionSidebar from '../components/session-sidebar';
 import ChatPanel from '../components/chat-panel';
 import OnboardingWizard from '../components/onboarding-wizard';
+import ShortcutsHelp from '../components/shortcuts-help';
+import { useKeyboardShortcuts } from '../utils/keyboard-shortcuts';
 import './style.css';
 
 function AdminPageApp() {
-	const { fetchProviders, fetchSessions, fetchSettings } =
+	const { fetchProviders, fetchSessions, fetchSettings, clearCurrentSession } =
 		useDispatch( STORE_NAME );
 	const { settings, settingsLoaded } = useSelect(
 		( select ) => ( {
@@ -26,6 +28,7 @@ function AdminPageApp() {
 	);
 
 	const [ showOnboarding, setShowOnboarding ] = useState( false );
+	const [ showShortcuts, setShowShortcuts ] = useState( false );
 
 	useEffect( () => {
 		fetchProviders();
@@ -38,6 +41,31 @@ function AdminPageApp() {
 			setShowOnboarding( settings.onboarding_complete === false );
 		}
 	}, [ settingsLoaded, settings ] );
+
+	const handleSlashCommand = useCallback( ( command ) => {
+		if ( command === 'help' ) {
+			setShowShortcuts( true );
+		}
+	}, [] );
+
+	// Keyboard shortcuts.
+	const shortcuts = useMemo(
+		() => ( {
+			'mod+n': () => clearCurrentSession(),
+			'mod+k': () => {
+				const searchInput = document.querySelector(
+					'.ai-agent-sidebar-search'
+				);
+				if ( searchInput ) {
+					searchInput.focus();
+				}
+			},
+			'mod+/': () => setShowShortcuts( ( prev ) => ! prev ),
+		} ),
+		[ clearCurrentSession ]
+	);
+
+	useKeyboardShortcuts( shortcuts );
 
 	if ( ! settingsLoaded ) {
 		return null;
@@ -52,12 +80,19 @@ function AdminPageApp() {
 	}
 
 	return (
-		<div className="ai-agent-layout">
-			<SessionSidebar />
-			<div className="ai-agent-main">
-				<ChatPanel />
+		<>
+			<div className="ai-agent-layout">
+				<SessionSidebar />
+				<div className="ai-agent-main">
+					<ChatPanel onSlashCommand={ handleSlashCommand } />
+				</div>
 			</div>
-		</div>
+			{ showShortcuts && (
+				<ShortcutsHelp
+					onClose={ () => setShowShortcuts( false ) }
+				/>
+			) }
+		</>
 	);
 }
 

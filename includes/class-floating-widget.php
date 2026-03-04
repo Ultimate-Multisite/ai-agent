@@ -10,6 +10,10 @@
 
 namespace AiAgent;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class Floating_Widget {
 
 	/**

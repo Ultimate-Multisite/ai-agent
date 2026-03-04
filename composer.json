@@ -10,7 +10,8 @@
 		}
 	],
 	"require": {
-		"php": ">=7.4"
+		"php": ">=7.4",
+		"smalot/pdfparser": "^2.0"
 	},
 	"autoload": {
 		"classmap": [

@@ -390,3 +390,114 @@
 		height: 48px;
 	}
 }
+
+/* Debug mode badge */
+.ai-agent-debug-badge {
+	display: inline-block;
+	background: #dba617;
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	padding: 1px 6px;
+	border-radius: 3px;
+	margin-left: 8px;
+	vertical-align: middle;
+	line-height: 18px;
+}
+
+/* Debug panel (below assistant messages) */
+.ai-agent-debug-panel {
+	align-self: flex-start;
+	max-width: 85%;
+	margin-top: 2px;
+}
+
+.ai-agent-debug-toggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: none;
+	border: none;
+	padding: 2px 0;
+	cursor: pointer;
+	color: #a7aaad;
+	font-size: 11px;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+	line-height: 1.4;
+	transition: color 0.15s;
+}
+
+.ai-agent-debug-toggle:hover {
+	color: #787c82;
+}
+
+.ai-agent-debug-summary {
+	white-space: nowrap;
+}
+
+.ai-agent-debug-caret {
+	font-size: 10px;
+}
+
+.ai-agent-debug-details {
+	background: #f6f7f7;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	padding: 8px 12px;
+	margin-top: 4px;
+	font-size: 11px;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.ai-agent-debug-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 2px 0;
+	line-height: 1.5;
+}
+
+.ai-agent-debug-label {
+	color: #787c82;
+	white-space: nowrap;
+}
+
+.ai-agent-debug-value {
+	color: #1d2327;
+	font-weight: 500;
+	text-align: right;
+}
+
+.ai-agent-debug-detail {
+	font-weight: normal;
+	color: #a7aaad;
+	margin-left: 4px;
+}
+
+/* Suggestion chips */
+.ai-agent-suggestion-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 6px;
+	padding-left: 4px;
+}
+
+.ai-agent-suggestion-chip.components-button {
+	font-size: 12px;
+	padding: 3px 10px;
+	border-radius: 14px;
+	border: 1px solid #dcdcde;
+	background: #f6f7f7;
+	color: #1e1e1e;
+	height: auto;
+	line-height: 1.4;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.ai-agent-suggestion-chip.components-button:hover {
+	background: #e0e0e0;
+	border-color: #bbb;
+}

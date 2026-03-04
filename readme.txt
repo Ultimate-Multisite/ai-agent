@@ -1,69 +1,157 @@
-=== AI Agent for WordPress ===
-Contributors: flavor
-Tags: ai, agent, chatbot, abilities, mcp
+=== AI Agent ===
+Contributors: developer-dave
+Tags: ai, chatbot, assistant, automation, tools
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 1.0.0
 License: GPL-2.0-or-later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Agentic AI loop for WordPress — chat with an AI that can call WordPress abilities autonomously.
+An AI assistant in your dashboard. Chat with it, teach it about your site, and let it manage tasks — using your own API key.
 
 == Description ==
 
-AI Agent provides an interactive chat interface in the WordPress admin where
-an AI assistant can autonomously call WordPress abilities (tools) to help manage
-your site. It uses the WordPress Abilities API (6.9+) to discover and execute
-registered abilities.
+AI Agent adds a powerful AI assistant directly inside your WordPress admin. Ask it questions, give it tasks, and it will use your site's tools to get the job done — creating posts, managing users, checking site health, calling external APIs, and more.
 
-Features:
+**You bring your own API key.** AI Agent connects directly to your chosen AI provider (OpenAI, Anthropic, or any OpenAI-compatible service). There is no middleman, no markup on API costs, and no data routed through third-party servers. You pay only what your provider charges, and you can see every cent in their dashboard.
 
-* Agentic loop with tool-calling support
-* Admin chat interface
-* Discovers abilities from any plugin that registers them
-* MCP-compatible tool execution
+= Built on WordPress Core =
 
-== Extending with Ability Plugins ==
+AI Agent is built on official WordPress APIs shipping in version 6.9:
 
-The AI Agent discovers abilities at runtime from any plugin that registers them via
-`wp_register_ability()`. The more abilities installed, the more capable the agent.
+* **AI Client SDK** — One interface for all AI providers. Install a connector plugin for OpenAI, Anthropic, Ollama, or any compatible service and AI Agent works immediately.
+* **Abilities API** — The WordPress-native tool registry. Every tool registered by any plugin on your site is automatically available to the agent. As your site grows, so does the agent's capabilities.
 
-= Recommended Ability Plugins =
+This means no fragile custom API wrappers, no vendor lock-in, and automatic improvements as WordPress core evolves.
 
-**WP-CLI Abilities Bridge**
-Automatically discovers all WP-CLI commands and exposes them as abilities. Gives
-the agent 500+ tools covering posts, users, plugins, themes, WooCommerce, and more.
-Also includes system CLI tools (whois, curl, dig, bash, php, etc.).
-Status: Available (bundled)
+= Two Ways to Chat =
 
-**Ultimate Multisite Core**
-Registers abilities for multisite management: customers, memberships, sites, payments,
-products, domains, checkout, and email accounts. Includes full MCP server support.
-Status: Available — built into Ultimate Multisite 2.4+
+* **Full-page chat** at Tools > AI Agent — A complete workspace with session history, folder organization, search, and export.
+* **Floating widget** — A small button on every admin page that expands into a chat panel. Always available, never in the way.
 
-**WooCommerce** (via WP-CLI Abilities Bridge)
-WooCommerce's CLI commands are automatically exposed: products, orders, customers,
-coupons, shipping, payment gateways, and more.
+= It Remembers =
 
-**WordPress Core**
-WordPress 6.9+ provides the Abilities API framework. Core abilities for post CRUD,
-media management, user management, and options are available via WP-CLI bridge.
+The agent has persistent memory across sessions. It learns your preferences, site details, and workflows over time. You can also teach it manually or let it save knowledge automatically.
 
-**Custom Plugin Abilities**
-Any plugin can register abilities via `wp_register_ability()`. See the WordPress
-Abilities API documentation for details.
+= It Knows Your Content =
+
+Index your posts, pages, and uploaded documents into a searchable knowledge base. The agent searches this knowledge automatically when it needs context to answer your questions.
+
+= Custom Tools Without Code =
+
+Create tools the agent can use — no plugin development needed:
+
+* **HTTP tools** — Connect to any external API (weather services, Zapier, Slack, CRMs)
+* **WordPress action tools** — Trigger any WordPress hook
+* **WP-CLI tools** — Run command-line operations
+
+Five example tools are included to get you started.
+
+= Scheduled Automations =
+
+Set up AI tasks that run automatically on a schedule:
+
+* Daily site health reports
+* Weekly plugin update checks
+* Content moderation
+* Broken link scanning
+* Database cleanup
+
+Pick a schedule, write a prompt, and the agent handles the rest. View logs for every run.
+
+= Event-Driven Automations =
+
+The agent can react to things happening on your site in real time:
+
+* A new post is published — auto-generate tags and a social media summary
+* A user registers — send a personalized welcome sequence
+* A WooCommerce order is placed — check inventory and notify your team
+* A plugin is activated — run a compatibility check
+
+20+ WordPress and WooCommerce triggers are included, with placeholder templates for dynamic data.
+
+= Tool Profiles =
+
+Control what the agent can access. Six built-in profiles (Read Only, Full Management, Content, Users, Maintenance, Developer) let you quickly scope permissions. Create your own custom profiles for specific use cases.
+
+= Smart and Efficient =
+
+* **Tool discovery** — On sites with many tools, the agent discovers what it needs instead of loading everything upfront. Saves tokens and money.
+* **Conversation trimming** — Long conversations are automatically trimmed at safe boundaries to prevent context overflow.
+* **Suggestion chips** — Clickable follow-up suggestions after each response keep the conversation flowing.
+* **Usage tracking** — See exactly how many tokens each session uses and what it costs.
+
+= Skills =
+
+Create reusable instruction guides for the agent. Write a "content publishing checklist" or "image optimization workflow" once, and the agent follows it whenever the task comes up.
+
+= Export and Import =
+
+Export any conversation to JSON (for backup and reimport) or Markdown (for sharing and documentation). Import conversations from JSON backups.
+
+= Extending with Ability Plugins =
+
+The AI Agent discovers abilities at runtime from any plugin that registers them via `wp_register_ability()`. The more abilities installed, the more capable the agent.
+
+**Recommended ability plugins:**
+
+* **WP-CLI Abilities Bridge** — Exposes all WP-CLI commands as abilities. Gives the agent 500+ tools covering posts, users, plugins, themes, WooCommerce, and more.
+* **Ultimate Multisite Core** — Registers abilities for multisite management: customers, memberships, sites, payments, products, domains, and email accounts.
+* **Any plugin using the Abilities API** — Tools registered by any plugin are automatically available. No configuration needed.
 
 == Installation ==
 
-1. Requires WordPress 6.9+ with the Abilities API
-2. Activate the plugin
-3. Install ability-providing plugins (e.g. WP-CLI Abilities Bridge)
-4. Go to AI Agent in the admin menu to start chatting
+1. Upload the `ai-agent` folder to `/wp-content/plugins/` or install through the WordPress plugin screen.
+2. Activate the plugin.
+3. Go to **Settings > AI Credentials** and configure a connector for your AI provider (OpenAI, Anthropic, etc.). You will need an API key from your provider.
+4. Visit **Tools > AI Agent Settings** to choose your default provider and model.
+5. Open **Tools > AI Agent** and start chatting.
 
-== Changelog ==
+= Requirements =
 
-= 0.1.0 =
-* Initial release
-* Agentic AI loop with tool-calling
-* Admin chat interface
-* Abilities API integration
+* WordPress 6.9 or higher
+* PHP 7.4 or higher
+* An AI provider connector plugin registered through the WordPress Connectors API
+* An API key from your chosen AI provider (OpenAI, Anthropic, etc.)
+
+== Frequently Asked Questions ==
+
+= Which AI providers are supported? =
+
+Any provider that has a connector plugin for the WordPress AI Client SDK. This currently includes OpenAI (GPT-4o, GPT-4.1), Anthropic (Claude Opus 4, Sonnet 4, Haiku 4), and any OpenAI-compatible API (Ollama, Azure OpenAI, Groq, Together AI, etc.).
+
+= How much does it cost to use? =
+
+The plugin itself is free. You pay only for the API usage from your chosen provider at their published rates. There is no markup, subscription, or usage fee from AI Agent. The Usage tab in settings tracks your token consumption and estimated costs.
+
+= Is my data sent to a third party? =
+
+Your conversations go directly from your WordPress site to your configured AI provider. Nothing is routed through any intermediary server. The plugin stores conversation history, memories, and knowledge locally in your WordPress database.
+
+= Can I use a local AI model? =
+
+Yes. If you run a local model through Ollama or any OpenAI-compatible server, configure it as a provider through the WordPress Connectors API and AI Agent will use it. All inference happens on your hardware with zero API costs.
+
+= What can the agent actually do? =
+
+The agent can use any tool (ability) registered on your WordPress site. Out of the box this includes managing posts, pages, users, comments, media, site options, and more. With custom tools you can extend it to call external APIs, trigger WordPress hooks, or run WP-CLI commands. Any plugin that registers abilities through the WordPress Abilities API automatically makes those tools available to the agent.
+
+= Is it safe? Will the AI break my site? =
+
+The agent has a built-in confirmation system. Potentially destructive tool calls pause and ask for your approval before executing. You can configure each tool as "auto" (always allow), "confirm" (ask first), or "disabled" in the Abilities tab. Tool profiles let you restrict the agent to read-only access.
+
+= Can I use this on a multisite network? =
+
+Yes, the plugin works on both single-site and multisite WordPress installations. Each site has its own settings, sessions, memories, and automations.
+
+== Screenshots ==
+
+1. Full-page chat interface with session sidebar and folder organization
+2. Floating widget available on every admin page
+3. Custom Tools tab — create HTTP, ACTION, and CLI tools without code
+4. Tool Profiles — restrict what the agent can access
+5. Scheduled Automations with quick-start templates
+6. Event-Driven Automations with WordPress and WooCommerce triggers
+7. Knowledge Base management for RAG
+8. Settings page with 12 configuration tabs

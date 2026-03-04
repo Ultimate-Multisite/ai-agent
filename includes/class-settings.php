@@ -10,12 +10,22 @@
 
 namespace AiAgent;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class Settings {
 
 	/**
 	 * Option name in the wp_options table.
 	 */
 	const OPTION_NAME = 'ai_agent_settings';
+
+	/**
+	 * Separate option name for the Claude Max OAuth token (stored apart from
+	 * general settings so it can be given stricter access control).
+	 */
+	const CLAUDE_MAX_TOKEN_OPTION = 'ai_agent_claude_max_token';
 
 	/**
 	 * Settings page slug.
@@ -36,11 +46,48 @@ class Settings {
 			'system_prompt'          => '',
 			'auto_memory'            => true,
 			'disabled_abilities'     => [],
+			'tool_permissions'       => [],
 			'temperature'            => 0.7,
 			'max_output_tokens'      => 4096,
 			'context_window_default' => 128000,
 			'onboarding_complete'    => false,
+			'use_claude_max'         => false,
+			'knowledge_enabled'        => true,
+			'knowledge_auto_index'     => true,
+			'tool_discovery_mode'      => 'auto',
+			'tool_discovery_threshold' => 20,
+			'active_tool_profile'      => '',
+			'max_history_turns'        => 20,
+			'suggestion_count'         => 3,
 		];
+	}
+
+	/**
+	 * Get the stored Claude Max OAuth access token.
+	 *
+	 * The token is stored in its own option rather than the general settings
+	 * blob so that it can be excluded from REST API exposure and treated as a
+	 * credential (not a preference).
+	 *
+	 * @return string Empty string when not configured.
+	 */
+	public static function get_claude_max_token(): string {
+		return (string) get_option( self::CLAUDE_MAX_TOKEN_OPTION, '' );
+	}
+
+	/**
+	 * Persist the Claude Max OAuth access token.
+	 *
+	 * Pass an empty string to clear the credential.
+	 *
+	 * @param string $token The OAuth access token (sk-ant-oat01-… or similar).
+	 * @return bool True on success.
+	 */
+	public static function set_claude_max_token( string $token ): bool {
+		if ( '' === $token ) {
+			return delete_option( self::CLAUDE_MAX_TOKEN_OPTION );
+		}
+		return update_option( self::CLAUDE_MAX_TOKEN_OPTION, $token );
 	}
 
 	/**

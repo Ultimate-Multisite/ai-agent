@@ -34,6 +34,7 @@ class Memory {
 		$table = self::table_name();
 
 		if ( $category ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 			return $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT * FROM %i WHERE category = %s ORDER BY updated_at DESC",
@@ -43,6 +44,7 @@ class Memory {
 			);
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM %i ORDER BY category ASC, updated_at DESC",
@@ -75,7 +77,8 @@ class Memory {
 			$category = 'general';
 		}
 
-		$now    = current_time( 'mysql', true );
+		$now = current_time( 'mysql', true );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table query; caching not applicable.
 		$result = $wpdb->insert(
 			self::table_name(),
 			[
@@ -109,6 +112,7 @@ class Memory {
 
 		$data['updated_at'] = current_time( 'mysql', true );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		$result = $wpdb->update(
 			self::table_name(),
 			$data,
@@ -129,6 +133,7 @@ class Memory {
 	public static function delete( int $id ): bool {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		$result = $wpdb->delete(
 			self::table_name(),
 			[ 'id' => $id ],
@@ -136,6 +141,75 @@ class Memory {
 		);
 
 		return $result !== false;
+	}
+
+	/**
+	 * Search memories using FULLTEXT.
+	 *
+	 * @param string $query Search query.
+	 * @param int    $limit Max results.
+	 * @return array
+	 */
+	public static function search( string $query, int $limit = 20 ): array {
+		global $wpdb;
+
+		$table = self::table_name();
+
+		// Build boolean mode search terms.
+		$words        = preg_split( '/\s+/', trim( $query ) );
+		$boolean_terms = [];
+		foreach ( $words as $word ) {
+			$word = preg_replace( '/[^\w]/', '', $word );
+			if ( strlen( $word ) > 1 ) {
+				$boolean_terms[] = '+' . $word . '*';
+			}
+		}
+
+		if ( empty( $boolean_terms ) ) {
+			return [];
+		}
+
+		$search_expr = implode( ' ', $boolean_terms );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT *, MATCH(content) AGAINST(%s IN BOOLEAN MODE) AS relevance
+				FROM %i
+				WHERE MATCH(content) AGAINST(%s IN BOOLEAN MODE)
+				ORDER BY relevance DESC
+				LIMIT %d",
+				$search_expr,
+				$table,
+				$search_expr,
+				$limit
+			)
+		);
+
+		return $results ?: [];
+	}
+
+	/**
+	 * Delete memories matching a topic (FULLTEXT search + delete).
+	 *
+	 * @param string $topic The topic to forget.
+	 * @return int Number of memories deleted.
+	 */
+	public static function forget_by_topic( string $topic ): int {
+		$matches = self::search( $topic, 50 );
+
+		if ( empty( $matches ) ) {
+			return 0;
+		}
+
+		$deleted = 0;
+		foreach ( $matches as $memory ) {
+			if ( self::delete( (int) $memory->id ) ) {
+				$deleted++;
+			}
+		}
+
+		return $deleted;
 	}
 
 	/**

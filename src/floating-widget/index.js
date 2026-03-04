@@ -43,50 +43,50 @@ function FloatingWidget() {
 }
 
 /**
- * Gather context about the current admin page.
+ * Gather structured context about the current admin page.
+ *
+ * Returns an object with url, admin_page, screen_id, post_id.
  */
 function gatherPageContext() {
-	const parts = [];
+	const context = {
+		url: window.location.href,
+	};
 
-	// Page title.
-	const heading =
-		document.querySelector( '.wrap > h1' ) ||
-		document.querySelector( '#wpbody-content h1' );
-	if ( heading ) {
-		parts.push( 'Page title: ' + heading.textContent.trim() );
-	}
-
-	// Current URL.
-	parts.push( 'URL: ' + window.location.href );
-
-	// Admin page from body classes.
+	// Admin page slug from body classes.
 	const bodyClasses = document.body.className;
 	const pageMatch = bodyClasses.match(
 		/(?:toplevel|[\w-]+)_page_[\w-]+|edit-php|post-php|upload-php|edit-tags-php/
 	);
 	if ( pageMatch ) {
-		parts.push( 'Admin page class: ' + pageMatch[ 0 ] );
+		context.admin_page = pageMatch[ 0 ];
 	}
 
-	// Post type if editing.
-	const postType = document.getElementById( 'post_type' );
-	if ( postType ) {
-		parts.push( 'Post type: ' + postType.value );
+	// Use window.pagenow if available (set by WordPress).
+	if ( window.pagenow ) {
+		context.admin_page = window.pagenow;
 	}
 
-	// Post title if editing.
-	const titleField = document.getElementById( 'title' );
-	if ( titleField && titleField.value ) {
-		parts.push( 'Post title: ' + titleField.value );
+	// Screen ID from window.adminpage (set by WordPress).
+	if ( window.adminpage ) {
+		context.screen_id = window.adminpage;
 	}
 
-	// Screen ID from body class.
-	const screenMatch = bodyClasses.match( /wp-admin\s/ );
-	if ( screenMatch ) {
-		parts.push( 'Screen: WordPress Admin' );
+	// Post ID if on an edit screen.
+	const urlParams = new URLSearchParams( window.location.search );
+	const postParam = urlParams.get( 'post' );
+	if ( postParam ) {
+		context.post_id = parseInt( postParam, 10 ) || 0;
 	}
 
-	return parts.join( '\n' );
+	// Page title for extra context.
+	const heading =
+		document.querySelector( '.wrap > h1' ) ||
+		document.querySelector( '#wpbody-content h1' );
+	if ( heading ) {
+		context.page_title = heading.textContent.trim();
+	}
+
+	return context;
 }
 
 // Mount the floating widget.

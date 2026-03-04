@@ -32,6 +32,13 @@ const DEFAULT_STATE = {
 	floatingMinimized: false,
 	pageContext: '',
 
+	// Session filters
+	sessionFilter: 'active',
+	sessionFolder: '',
+	sessionSearch: '',
+	folders: [],
+	foldersLoaded: false,
+
 	// Settings
 	settings: null,
 	settingsLoaded: false,
@@ -46,6 +53,13 @@ const DEFAULT_STATE = {
 
 	// Token usage (current session)
 	tokenUsage: { prompt: 0, completion: 0 },
+
+	// Pending confirmation (Batch 8)
+	pendingConfirmation: null,
+
+	// Debug mode
+	debugMode: localStorage.getItem( 'aiAgentDebugMode' ) === 'true',
+	sendTimestamp: 0,
 };
 
 const actions = {
@@ -107,6 +121,31 @@ const actions = {
 	setTokenUsage( tokenUsage ) {
 		return { type: 'SET_TOKEN_USAGE', tokenUsage };
 	},
+	setSessionFilter( filter ) {
+		return { type: 'SET_SESSION_FILTER', filter };
+	},
+	setSessionFolder( folder ) {
+		return { type: 'SET_SESSION_FOLDER', folder };
+	},
+	setSessionSearch( search ) {
+		return { type: 'SET_SESSION_SEARCH', search };
+	},
+	setFolders( folders ) {
+		return { type: 'SET_FOLDERS', folders };
+	},
+	setPendingConfirmation( confirmation ) {
+		return { type: 'SET_PENDING_CONFIRMATION', confirmation };
+	},
+	truncateMessagesTo( index ) {
+		return { type: 'TRUNCATE_MESSAGES_TO', index };
+	},
+	setDebugMode( enabled ) {
+		localStorage.setItem( 'aiAgentDebugMode', enabled ? 'true' : 'false' );
+		return { type: 'SET_DEBUG_MODE', enabled };
+	},
+	setSendTimestamp( ts ) {
+		return { type: 'SET_SEND_TIMESTAMP', ts };
+	},
 
 	// ─── Thunks ──────────────────────────────────────────────────
 
@@ -118,7 +157,7 @@ const actions = {
 				} );
 				dispatch.setProviders( providers );
 
-				// Auto-select first provider if none saved.
+				// Auto-select first provider if none saved or saved one is unavailable.
 				const saved = localStorage.getItem( 'aiAgentProvider' );
 				if (
 					( ! saved ||
@@ -130,6 +169,8 @@ const actions = {
 						dispatch.setSelectedModel(
 							providers[ 0 ].models[ 0 ].id
 						);
+					} else {
+						dispatch.setSelectedModel( '' );
 					}
 				}
 			} catch {
@@ -139,11 +180,27 @@ const actions = {
 	},
 
 	fetchSessions() {
-		return async ( { dispatch } ) => {
+		return async ( { dispatch, select } ) => {
 			try {
-				const sessions = await apiFetch( {
-					path: '/ai-agent/v1/sessions',
-				} );
+				const params = new URLSearchParams();
+				const filter = select.getSessionFilter();
+				const folder = select.getSessionFolder();
+				const search = select.getSessionSearch();
+
+				if ( filter ) {
+					params.set( 'status', filter );
+				}
+				if ( folder ) {
+					params.set( 'folder', folder );
+				}
+				if ( search ) {
+					params.set( 'search', search );
+				}
+
+				const qs = params.toString();
+				const path = '/ai-agent/v1/sessions' + ( qs ? '?' + qs : '' );
+
+				const sessions = await apiFetch( { path } );
 				dispatch.setSessions( sessions );
 			} catch {
 				dispatch.setSessions( [] );
@@ -152,7 +209,7 @@ const actions = {
 	},
 
 	openSession( sessionId ) {
-		return async ( { dispatch } ) => {
+		return async ( { dispatch, select } ) => {
 			try {
 				const session = await apiFetch( {
 					path: `/ai-agent/v1/sessions/${ sessionId }`,
@@ -162,11 +219,22 @@ const actions = {
 					session.messages || [],
 					session.tool_calls || []
 				);
+				// Only restore provider/model if the provider is still available.
 				if ( session.provider_id ) {
-					dispatch.setSelectedProvider( session.provider_id );
-				}
-				if ( session.model_id ) {
-					dispatch.setSelectedModel( session.model_id );
+					const providers = select.getProviders();
+					const providerExists = providers.some(
+						( p ) => p.id === session.provider_id
+					);
+					if ( providerExists ) {
+						dispatch.setSelectedProvider(
+							session.provider_id
+						);
+						if ( session.model_id ) {
+							dispatch.setSelectedModel(
+								session.model_id
+							);
+						}
+					}
 				}
 				if ( session.token_usage ) {
 					dispatch.setTokenUsage( session.token_usage );
@@ -190,6 +258,215 @@ const actions = {
 				dispatch.fetchSessions();
 			} catch {
 				// ignore
+			}
+		};
+	},
+
+	pinSession( sessionId, pinned ) {
+		return async ( { dispatch } ) => {
+			await apiFetch( {
+				path: `/ai-agent/v1/sessions/${ sessionId }`,
+				method: 'PATCH',
+				data: { pinned },
+			} );
+			dispatch.fetchSessions();
+		};
+	},
+
+	archiveSession( sessionId ) {
+		return async ( { dispatch, select } ) => {
+			await apiFetch( {
+				path: `/ai-agent/v1/sessions/${ sessionId }`,
+				method: 'PATCH',
+				data: { status: 'archived' },
+			} );
+			if ( select.getCurrentSessionId() === sessionId ) {
+				dispatch.clearCurrentSession();
+			}
+			dispatch.fetchSessions();
+		};
+	},
+
+	trashSession( sessionId ) {
+		return async ( { dispatch, select } ) => {
+			await apiFetch( {
+				path: `/ai-agent/v1/sessions/${ sessionId }`,
+				method: 'PATCH',
+				data: { status: 'trash' },
+			} );
+			if ( select.getCurrentSessionId() === sessionId ) {
+				dispatch.clearCurrentSession();
+			}
+			dispatch.fetchSessions();
+		};
+	},
+
+	restoreSession( sessionId ) {
+		return async ( { dispatch } ) => {
+			await apiFetch( {
+				path: `/ai-agent/v1/sessions/${ sessionId }`,
+				method: 'PATCH',
+				data: { status: 'active' },
+			} );
+			dispatch.fetchSessions();
+		};
+	},
+
+	moveSessionToFolder( sessionId, folder ) {
+		return async ( { dispatch } ) => {
+			await apiFetch( {
+				path: `/ai-agent/v1/sessions/${ sessionId }`,
+				method: 'PATCH',
+				data: { folder },
+			} );
+			dispatch.fetchSessions();
+			dispatch.fetchFolders();
+		};
+	},
+
+	renameSession( sessionId, title ) {
+		return async ( { dispatch } ) => {
+			await apiFetch( {
+				path: `/ai-agent/v1/sessions/${ sessionId }`,
+				method: 'PATCH',
+				data: { title },
+			} );
+			dispatch.fetchSessions();
+		};
+	},
+
+	fetchFolders() {
+		return async ( { dispatch } ) => {
+			try {
+				const folders = await apiFetch( {
+					path: '/ai-agent/v1/sessions/folders',
+				} );
+				dispatch.setFolders( folders );
+			} catch {
+				dispatch.setFolders( [] );
+			}
+		};
+	},
+
+	exportSession( sessionId, format = 'json' ) {
+		return async () => {
+			const result = await apiFetch( {
+				path: `/ai-agent/v1/sessions/${ sessionId }/export?format=${ format }`,
+			} );
+			const content =
+				format === 'json'
+					? JSON.stringify( result.content, null, 2 )
+					: result.content;
+			const blob = new Blob( [ content ], {
+				type:
+					format === 'json'
+						? 'application/json'
+						: 'text/markdown',
+			} );
+			const url = URL.createObjectURL( blob );
+			const a = document.createElement( 'a' );
+			a.href = url;
+			a.download = result.filename;
+			a.click();
+			URL.revokeObjectURL( url );
+		};
+	},
+
+	importSession( data ) {
+		return async ( { dispatch } ) => {
+			const session = await apiFetch( {
+				path: '/ai-agent/v1/sessions/import',
+				method: 'POST',
+				data,
+			} );
+			dispatch.fetchSessions();
+			dispatch.openSession( session.id );
+		};
+	},
+
+	regenerateMessage( index ) {
+		return async ( { dispatch, select } ) => {
+			const messages = select.getCurrentSessionMessages();
+			// Find the user message at or before this index.
+			let userIdx = index;
+			while ( userIdx >= 0 && messages[ userIdx ]?.role !== 'user' ) {
+				userIdx--;
+			}
+			if ( userIdx < 0 ) {
+				return;
+			}
+			const userText = messages[ userIdx ]?.parts
+				?.filter( ( p ) => p.text )
+				.map( ( p ) => p.text )
+				.join( '' );
+			if ( ! userText ) {
+				return;
+			}
+			// Truncate to just before this user message.
+			dispatch.truncateMessagesTo( userIdx );
+			dispatch.sendMessage( userText );
+		};
+	},
+
+	editAndResend( index, newText ) {
+		return async ( { dispatch } ) => {
+			dispatch.truncateMessagesTo( index );
+			dispatch.sendMessage( newText );
+		};
+	},
+
+	stopGeneration() {
+		return async ( { dispatch } ) => {
+			dispatch.setCurrentJobId( null );
+			dispatch.setSending( false );
+		};
+	},
+
+	confirmToolCall( jobId, alwaysAllow = false ) {
+		return async ( { dispatch } ) => {
+			dispatch.setPendingConfirmation( null );
+			try {
+				await apiFetch( {
+					path: `/ai-agent/v1/job/${ jobId }/confirm`,
+					method: 'POST',
+					data: { always_allow: alwaysAllow },
+				} );
+				dispatch.pollJob( jobId );
+			} catch ( err ) {
+				dispatch.appendMessage( {
+					role: 'system',
+					parts: [
+						{
+							text: `Error: ${ err.message || 'Failed to confirm tool call' }`,
+						},
+					],
+				} );
+				dispatch.setSending( false );
+				dispatch.setCurrentJobId( null );
+			}
+		};
+	},
+
+	rejectToolCall( jobId ) {
+		return async ( { dispatch } ) => {
+			dispatch.setPendingConfirmation( null );
+			try {
+				await apiFetch( {
+					path: `/ai-agent/v1/job/${ jobId }/reject`,
+					method: 'POST',
+				} );
+				dispatch.pollJob( jobId );
+			} catch ( err ) {
+				dispatch.appendMessage( {
+					role: 'system',
+					parts: [
+						{
+							text: `Error: ${ err.message || 'Failed to reject tool call' }`,
+						},
+					],
+				} );
+				dispatch.setSending( false );
+				dispatch.setCurrentJobId( null );
 			}
 		};
 	},
@@ -245,17 +522,13 @@ const actions = {
 				model_id: select.getSelectedModelId(),
 			};
 
-			// Include page context if available.
+			// Include structured page context if available.
 			const pageContext = select.getPageContext();
 			if ( pageContext ) {
-				body.system_instruction =
-					'You are a helpful WordPress assistant with access to tools that can interact with this WordPress site. ' +
-					'Use the available tools to help the user accomplish their goals. ' +
-					'When you need information from the site, call the appropriate tool rather than guessing. ' +
-					'After using tools, summarize the results clearly for the user.\n\n' +
-					'The user is currently viewing this admin page:\n' +
-					pageContext;
+				body.page_context = pageContext;
 			}
+
+			dispatch.setSendTimestamp( Date.now() );
 
 			try {
 				const result = await apiFetch( {
@@ -316,6 +589,15 @@ const actions = {
 						return;
 					}
 
+					if ( result.status === 'awaiting_confirmation' ) {
+						dispatch.setPendingConfirmation( {
+							jobId,
+							tools: result.pending_tools || [],
+						} );
+						// Don't clear sending — we're still waiting.
+						return;
+					}
+
 					if ( result.status === 'error' ) {
 						dispatch.appendMessage( {
 							role: 'system',
@@ -330,11 +612,39 @@ const actions = {
 					if ( result.status === 'complete' ) {
 						// Add assistant reply.
 						if ( result.reply ) {
-							dispatch.appendMessage( {
+							const msg = {
 								role: 'model',
 								parts: [ { text: result.reply } ],
 								toolCalls: result.tool_calls,
-							} );
+							};
+
+							// Attach debug metadata when debug mode is active.
+							if ( select.isDebugMode() ) {
+								const sendTs = select.getSendTimestamp();
+								const elapsed = sendTs ? Date.now() - sendTs : 0;
+								const tu = result.token_usage || {};
+								const completionTokens = tu.completion || 0;
+								const promptTokens = tu.prompt || 0;
+								const tokPerSec = elapsed > 0 ? ( completionTokens / ( elapsed / 1000 ) ) : 0;
+
+								// Derive tool call count and names.
+								const tc = result.tool_calls || [];
+								const toolCalls = tc.filter( ( t ) => t.type === 'call' );
+								const toolNames = [ ...new Set( toolCalls.map( ( t ) => t.name ) ) ];
+
+								msg.debug = {
+									responseTimeMs: elapsed,
+									tokenUsage: { prompt: promptTokens, completion: completionTokens },
+									tokensPerSecond: Math.round( tokPerSec * 10 ) / 10,
+									modelId: result.model_id || '',
+									costEstimate: result.cost_estimate || 0,
+									iterationsUsed: result.iterations_used || 0,
+									toolCallCount: toolCalls.length,
+									toolNames,
+								};
+							}
+
+							dispatch.appendMessage( msg );
 						}
 
 						if ( result.session_id ) {
@@ -632,6 +942,36 @@ const selectors = {
 		return state.skillsLoaded;
 	},
 
+	// Session filters
+	getSessionFilter( state ) {
+		return state.sessionFilter;
+	},
+	getSessionFolder( state ) {
+		return state.sessionFolder;
+	},
+	getSessionSearch( state ) {
+		return state.sessionSearch;
+	},
+	getFolders( state ) {
+		return state.folders;
+	},
+	getFoldersLoaded( state ) {
+		return state.foldersLoaded;
+	},
+
+	// Pending confirmation
+	getPendingConfirmation( state ) {
+		return state.pendingConfirmation;
+	},
+
+	// Debug mode
+	isDebugMode( state ) {
+		return state.debugMode;
+	},
+	getSendTimestamp( state ) {
+		return state.sendTimestamp;
+	},
+
 	// Token usage
 	getTokenUsage( state ) {
 		return state.tokenUsage;
@@ -731,6 +1071,28 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 			};
 		case 'SET_TOKEN_USAGE':
 			return { ...state, tokenUsage: action.tokenUsage };
+		case 'SET_SESSION_FILTER':
+			return { ...state, sessionFilter: action.filter };
+		case 'SET_SESSION_FOLDER':
+			return { ...state, sessionFolder: action.folder };
+		case 'SET_SESSION_SEARCH':
+			return { ...state, sessionSearch: action.search };
+		case 'SET_FOLDERS':
+			return { ...state, folders: action.folders, foldersLoaded: true };
+		case 'SET_PENDING_CONFIRMATION':
+			return { ...state, pendingConfirmation: action.confirmation };
+		case 'TRUNCATE_MESSAGES_TO':
+			return {
+				...state,
+				currentSessionMessages: state.currentSessionMessages.slice(
+					0,
+					action.index
+				),
+			};
+		case 'SET_DEBUG_MODE':
+			return { ...state, debugMode: action.enabled };
+		case 'SET_SEND_TIMESTAMP':
+			return { ...state, sendTimestamp: action.ts };
 		default:
 			return state;
 	}

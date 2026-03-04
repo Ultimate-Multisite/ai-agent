@@ -23,6 +23,12 @@ import apiFetch from '@wordpress/api-fetch';
 import STORE_NAME from '../store';
 import MemoryManager from './memory-manager';
 import SkillManager from './skill-manager';
+import KnowledgeManager from './knowledge-manager';
+import UsageDashboard from './usage-dashboard';
+import CustomToolsManager from './custom-tools-manager';
+import ToolProfilesManager from './tool-profiles-manager';
+import AutomationsManager from './automations-manager';
+import EventsManager from './events-manager';
 
 export default function SettingsApp() {
 	const { fetchSettings, fetchProviders, saveSettings } =
@@ -122,8 +128,38 @@ export default function SettingsApp() {
 			className: 'ai-agent-settings-tab',
 		},
 		{
+			name: 'knowledge',
+			title: __( 'Knowledge', 'ai-agent' ),
+			className: 'ai-agent-settings-tab',
+		},
+		{
+			name: 'custom-tools',
+			title: __( 'Custom Tools', 'ai-agent' ),
+			className: 'ai-agent-settings-tab',
+		},
+		{
+			name: 'tool-profiles',
+			title: __( 'Tool Profiles', 'ai-agent' ),
+			className: 'ai-agent-settings-tab',
+		},
+		{
+			name: 'automations',
+			title: __( 'Automations', 'ai-agent' ),
+			className: 'ai-agent-settings-tab',
+		},
+		{
+			name: 'events',
+			title: __( 'Events', 'ai-agent' ),
+			className: 'ai-agent-settings-tab',
+		},
+		{
 			name: 'abilities',
 			title: __( 'Abilities', 'ai-agent' ),
+			className: 'ai-agent-settings-tab',
+		},
+		{
+			name: 'usage',
+			title: __( 'Usage', 'ai-agent' ),
 			className: 'ai-agent-settings-tab',
 		},
 		{
@@ -277,12 +313,85 @@ export default function SettingsApp() {
 								</div>
 							);
 
+						case 'knowledge':
+							return (
+								<div className="ai-agent-settings-section">
+									<ToggleControl
+										label={ __(
+											'Enable Knowledge Base',
+											'ai-agent'
+										) }
+										checked={ local.knowledge_enabled }
+										onChange={ ( v ) =>
+											updateField(
+												'knowledge_enabled',
+												v
+											)
+										}
+										help={ __(
+											'When enabled, the AI can search indexed documents and posts for relevant context.',
+											'ai-agent'
+										) }
+										__nextHasNoMarginBottom
+									/>
+									<ToggleControl
+										label={ __(
+											'Auto-Index on Post Save',
+											'ai-agent'
+										) }
+										checked={
+											local.knowledge_auto_index
+										}
+										onChange={ ( v ) =>
+											updateField(
+												'knowledge_auto_index',
+												v
+											)
+										}
+										help={ __(
+											'Automatically index posts when they are published or updated.',
+											'ai-agent'
+										) }
+										__nextHasNoMarginBottom
+									/>
+									<KnowledgeManager />
+								</div>
+							);
+
+						case 'custom-tools':
+							return (
+								<div className="ai-agent-settings-section">
+									<CustomToolsManager />
+								</div>
+							);
+
+						case 'tool-profiles':
+							return (
+								<div className="ai-agent-settings-section">
+									<ToolProfilesManager />
+								</div>
+							);
+
+						case 'automations':
+							return (
+								<div className="ai-agent-settings-section">
+									<AutomationsManager />
+								</div>
+							);
+
+						case 'events':
+							return (
+								<div className="ai-agent-settings-section">
+									<EventsManager />
+								</div>
+							);
+
 						case 'abilities':
 							return (
 								<div className="ai-agent-settings-section">
 									<p className="description">
 										{ __(
-											'Toggle which abilities (tools) the AI agent can use.',
+											'Control how each tool behaves. "Auto" runs without asking, "Confirm" pauses to ask before running, "Disabled" prevents the tool from being used.',
 											'ai-agent'
 										) }
 									</p>
@@ -295,47 +404,74 @@ export default function SettingsApp() {
 										</p>
 									) }
 									{ abilities.map( ( ability ) => {
-										const disabled = (
-											local.disabled_abilities || []
-										).includes( ability.name );
+										const perms =
+											local.tool_permissions || {};
+										const currentPerm =
+											perms[ ability.name ] || 'auto';
 										return (
-											<ToggleControl
+											<SelectControl
 												key={ ability.name }
-												label={ `${ ability.label || ability.name }` }
+												label={
+													ability.label ||
+													ability.name
+												}
 												help={
 													ability.description || ''
 												}
-												checked={ ! disabled }
-												onChange={ ( enabled ) => {
-													const current = [
-														...(
-															local.disabled_abilities ||
-															[]
+												value={ currentPerm }
+												options={ [
+													{
+														label: __(
+															'Auto (always allow)',
+															'ai-agent'
 														),
-													];
-													if ( enabled ) {
-														updateField(
-															'disabled_abilities',
-															current.filter(
-																( n ) =>
-																	n !==
-																	ability.name
-															)
-														);
+														value: 'auto',
+													},
+													{
+														label: __(
+															'Confirm (ask before use)',
+															'ai-agent'
+														),
+														value: 'confirm',
+													},
+													{
+														label: __(
+															'Disabled',
+															'ai-agent'
+														),
+														value: 'disabled',
+													},
+												] }
+												onChange={ ( v ) => {
+													const updated = {
+														...( local.tool_permissions ||
+															{} ),
+													};
+													if ( v === 'auto' ) {
+														delete updated[
+															ability.name
+														];
 													} else {
-														updateField(
-															'disabled_abilities',
-															[
-																...current,
-																ability.name,
-															]
-														);
+														updated[
+															ability.name
+														] = v;
 													}
+													updateField(
+														'tool_permissions',
+														updated
+													);
 												} }
 												__nextHasNoMarginBottom
 											/>
 										);
 									} ) }
+								</div>
+							);
+
+						case 'usage':
+							return (
+								<div className="ai-agent-settings-section">
+									<UsageDashboard />
 								</div>
 							);
 
@@ -399,6 +535,77 @@ export default function SettingsApp() {
 										) }
 										__nextHasNoMarginBottom
 									/>
+									<SelectControl
+										label={ __(
+											'Tool Discovery Mode',
+											'ai-agent'
+										) }
+										value={
+											local.tool_discovery_mode ||
+											'auto'
+										}
+										options={ [
+											{
+												label: __(
+													'Auto (enable when tools exceed threshold)',
+													'ai-agent'
+												),
+												value: 'auto',
+											},
+											{
+												label: __(
+													'Always (always use discovery)',
+													'ai-agent'
+												),
+												value: 'always',
+											},
+											{
+												label: __(
+													'Never (load all tools directly)',
+													'ai-agent'
+												),
+												value: 'never',
+											},
+										] }
+										onChange={ ( v ) =>
+											updateField(
+												'tool_discovery_mode',
+												v
+											)
+										}
+										help={ __(
+											'When active, only priority tools are loaded directly. Other tools are discoverable via meta-tools, saving tokens.',
+											'ai-agent'
+										) }
+										__nextHasNoMarginBottom
+									/>
+									{ ( local.tool_discovery_mode ||
+										'auto' ) === 'auto' && (
+										<TextControl
+											label={ __(
+												'Discovery Threshold',
+												'ai-agent'
+											) }
+											type="number"
+											min={ 5 }
+											max={ 500 }
+											value={
+												local.tool_discovery_threshold ||
+												20
+											}
+											onChange={ ( v ) =>
+												updateField(
+													'tool_discovery_threshold',
+													parseInt( v, 10 ) || 20
+												)
+											}
+											help={ __(
+												'Enable discovery mode when total registered tools exceed this number.',
+												'ai-agent'
+											) }
+											__nextHasNoMarginBottom
+										/>
+									) }
 								</div>
 							);
 

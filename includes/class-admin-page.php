@@ -9,6 +9,10 @@
 
 namespace AiAgent;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class Admin_Page {
 
 	const SLUG = 'ai-agent';
@@ -72,7 +76,7 @@ class Admin_Page {
 			echo '<div class="wrap">';
 			echo '<h1>' . esc_html__( 'AI Agent', 'ai-agent' ) . '</h1>';
 			echo '<div class="notice notice-error"><p>';
-			echo esc_html__( 'The WordPress AI Client is not available. Please install WordPress 7.0 or the AI Experiments plugin.', 'ai-agent' );
+			echo esc_html__( 'The WordPress AI Client SDK is not available. Please check the compatibility layer.', 'ai-agent' );
 			echo '</p></div></div>';
 			return;
 		}

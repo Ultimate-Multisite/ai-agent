@@ -1,5 +1,28 @@
 /* Admin Page — full-page two-column layout */
 
+/* Prevent the outer page from scrolling on the AI Agent page.
+   The WordPress admin menu can be taller than the viewport, making
+   the body scrollable. Without this, focusing the chat input or
+   updating messages can inadvertently scroll the whole page. */
+html:has(body.tools_page_ai-agent),
+body.tools_page_ai-agent {
+	overflow: hidden;
+}
+
+/* Hide all admin notices on the AI Agent page */
+.ai-agent-admin-wrap ~ .notice,
+.ai-agent-admin-wrap ~ .updated,
+.ai-agent-admin-wrap ~ .error,
+.ai-agent-admin-wrap ~ .update-nag,
+body.tools_page_ai-agent .notice,
+body.tools_page_ai-agent .updated,
+body.tools_page_ai-agent .error,
+body.tools_page_ai-agent .update-nag,
+body.tools_page_ai-agent #wpbody-content > .notice,
+body.tools_page_ai-agent #wpbody-content > .updated {
+	display: none !important;
+}
+
 .ai-agent-admin-wrap {
 	margin-right: 0;
 }
@@ -30,9 +53,94 @@
 	border-bottom: 1px solid #dcdcde;
 }
 
+.ai-agent-sidebar-actions {
+	display: flex;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+
 .ai-agent-new-chat-btn {
-	width: 100%;
+	flex: 1;
 	justify-content: center;
+}
+
+.ai-agent-import-btn {
+	min-width: auto;
+	padding: 0 8px;
+}
+
+.ai-agent-sidebar-search {
+	width: 100%;
+	padding: 6px 10px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	font-size: 13px;
+	box-sizing: border-box;
+}
+
+.ai-agent-sidebar-search:focus {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	outline: none;
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
+}
+
+/* Filter tabs */
+.ai-agent-sidebar-filters {
+	display: flex;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ai-agent-filter-tab {
+	flex: 1;
+	padding: 6px 0;
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	color: #50575e;
+	font-size: 12px;
+	cursor: pointer;
+	text-align: center;
+	transition: color 0.15s, border-color 0.15s;
+}
+
+.ai-agent-filter-tab:hover {
+	color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.ai-agent-filter-tab.is-active {
+	color: var(--wp-admin-theme-color, #2271b1);
+	border-bottom-color: var(--wp-admin-theme-color, #2271b1);
+	font-weight: 500;
+}
+
+/* Folder tabs */
+.ai-agent-sidebar-folders {
+	display: flex;
+	gap: 4px;
+	padding: 6px 8px;
+	overflow-x: auto;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ai-agent-folder-tab {
+	padding: 3px 8px;
+	background: #e0e0e0;
+	border: none;
+	border-radius: 10px;
+	color: #50575e;
+	font-size: 11px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.15s, color 0.15s;
+}
+
+.ai-agent-folder-tab:hover {
+	background: #d0d0d0;
+}
+
+.ai-agent-folder-tab.is-active {
+	background: var(--wp-admin-theme-color, #2271b1);
+	color: #fff;
 }
 
 .ai-agent-session-list {
@@ -82,7 +190,24 @@
 	margin-top: 2px;
 }
 
-.ai-agent-session-delete {
+/* Pin indicator */
+.ai-agent-pin-icon {
+	font-size: 11px;
+	margin-right: 3px;
+}
+
+.ai-agent-session-folder-badge {
+	display: inline-block;
+	background: #e0e0e0;
+	padding: 0 5px;
+	border-radius: 7px;
+	font-size: 10px;
+	margin-right: 4px;
+	vertical-align: middle;
+}
+
+/* More button (three dots) */
+.ai-agent-session-more {
 	position: absolute;
 	top: 8px;
 	right: 8px;
@@ -98,13 +223,140 @@
 	transition: opacity 0.15s;
 }
 
-.ai-agent-session-item:hover .ai-agent-session-delete {
+.ai-agent-session-item:hover .ai-agent-session-more {
 	opacity: 1;
 }
 
-.ai-agent-session-delete:hover {
-	color: #d63638;
-	background: #fcf0f1;
+.ai-agent-session-more:hover {
+	color: #50575e;
+	background: #dcdcde;
+}
+
+/* Context menu */
+.ai-agent-context-menu {
+	position: absolute;
+	top: 100%;
+	right: 4px;
+	z-index: 100;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+	min-width: 160px;
+	padding: 4px 0;
+}
+
+.ai-agent-context-menu button {
+	display: block;
+	width: 100%;
+	padding: 6px 12px;
+	background: none;
+	border: none;
+	text-align: left;
+	font-size: 13px;
+	color: #1d2327;
+	cursor: pointer;
+	transition: background 0.1s;
+}
+
+.ai-agent-context-menu button:hover {
+	background: #f0f0f1;
+}
+
+.ai-agent-context-menu-danger {
+	color: #d63638 !important;
+}
+
+.ai-agent-context-menu-danger:hover {
+	background: #fcf0f1 !important;
+}
+
+.ai-agent-context-menu hr {
+	margin: 4px 0;
+	border: none;
+	border-top: 1px solid #dcdcde;
+}
+
+.ai-agent-context-menu-rename {
+	display: flex;
+	gap: 4px;
+	padding: 6px 8px;
+}
+
+.ai-agent-context-menu-rename input {
+	flex: 1;
+	padding: 4px 6px;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	font-size: 13px;
+}
+
+.ai-agent-context-menu-rename button {
+	width: auto;
+	padding: 4px 10px;
+	background: var(--wp-admin-theme-color, #2271b1);
+	color: #fff;
+	border-radius: 3px;
+	font-size: 12px;
+}
+
+/* Folder picker */
+.ai-agent-folder-picker {
+	padding: 4px 0;
+}
+
+.ai-agent-folder-picker-header {
+	padding: 6px 12px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #50575e;
+}
+
+.ai-agent-folder-picker-item {
+	display: block;
+	width: 100%;
+	padding: 6px 12px;
+	background: none;
+	border: none;
+	text-align: left;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.ai-agent-folder-picker-item:hover {
+	background: #f0f0f1;
+}
+
+.ai-agent-folder-picker-item.is-current {
+	font-weight: 600;
+	color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.ai-agent-folder-picker-new {
+	display: flex;
+	gap: 4px;
+	padding: 6px 8px;
+	border-top: 1px solid #dcdcde;
+	margin-top: 4px;
+}
+
+.ai-agent-folder-picker-new input {
+	flex: 1;
+	padding: 4px 6px;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	font-size: 12px;
+}
+
+.ai-agent-folder-picker-new button {
+	width: auto;
+	padding: 4px 8px;
+	background: var(--wp-admin-theme-color, #2271b1);
+	color: #fff;
+	border: none;
+	border-radius: 3px;
+	font-size: 11px;
+	cursor: pointer;
 }
 
 /* Main area */
@@ -224,6 +476,44 @@
 	font-size: 0.9em;
 }
 
+/* Code blocks (react-syntax-highlighter) */
+.ai-agent-code-block {
+	margin: 0.5em 0;
+	border-radius: 4px;
+	overflow: hidden;
+	border: 1px solid #3a3a3a;
+}
+
+.ai-agent-code-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 4px 12px;
+	background: #2d2d2d;
+	font-size: 12px;
+}
+
+.ai-agent-code-language {
+	color: #a0a0a0;
+	text-transform: lowercase;
+}
+
+.ai-agent-code-copy {
+	background: none;
+	border: 1px solid #555;
+	color: #ccc;
+	cursor: pointer;
+	font-size: 11px;
+	padding: 2px 8px;
+	border-radius: 3px;
+	transition: background 0.15s, color 0.15s;
+}
+
+.ai-agent-code-copy:hover {
+	background: #555;
+	color: #fff;
+}
+
 .ai-agent-assistant pre {
 	background: #1d2327;
 	color: #e0e0e0;
@@ -241,6 +531,52 @@
 	border-radius: 0;
 	font-size: inherit;
 	color: inherit;
+}
+
+/* Tables */
+.ai-agent-table-wrap {
+	overflow-x: auto;
+	margin: 0.5em 0;
+}
+
+.ai-agent-assistant table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 13px;
+}
+
+.ai-agent-assistant th,
+.ai-agent-assistant td {
+	border: 1px solid #dcdcde;
+	padding: 6px 10px;
+	text-align: left;
+}
+
+.ai-agent-assistant th {
+	background: #f0f0f1;
+	font-weight: 600;
+}
+
+.ai-agent-assistant tr:nth-child(even) td {
+	background: #fafafa;
+}
+
+/* Blockquote */
+.ai-agent-assistant blockquote {
+	margin: 0.5em 0;
+	padding: 4px 12px;
+	border-left: 3px solid #dcdcde;
+	color: #50575e;
+}
+
+/* Task lists (GFM) */
+.ai-agent-assistant .contains-task-list {
+	list-style: none;
+	padding-left: 0.5em;
+}
+
+.ai-agent-assistant .task-list-item input[type="checkbox"] {
+	margin-right: 6px;
 }
 
 .ai-agent-assistant a {
@@ -346,6 +682,93 @@
 	white-space: pre-wrap;
 }
 
+/* Message row */
+.ai-agent-message-row {
+	position: relative;
+}
+
+.ai-agent-message-row:hover .ai-agent-message-actions {
+	opacity: 1;
+}
+
+/* Message actions */
+.ai-agent-message-actions {
+	display: flex;
+	gap: 4px;
+	margin-top: 2px;
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.ai-agent-action-btn {
+	padding: 2px 8px;
+	background: none;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	color: #50575e;
+	font-size: 11px;
+	cursor: pointer;
+	transition: background 0.1s, color 0.1s;
+}
+
+.ai-agent-action-btn:hover {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+
+.ai-agent-action-btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/* Edit inline */
+.ai-agent-message-edit {
+	margin-top: 4px;
+}
+
+.ai-agent-message-edit-input {
+	width: 100%;
+	padding: 8px 10px;
+	border: 1px solid var(--wp-admin-theme-color, #2271b1);
+	border-radius: 4px;
+	font-size: 14px;
+	font-family: inherit;
+	resize: vertical;
+	box-sizing: border-box;
+}
+
+.ai-agent-message-edit-actions {
+	display: flex;
+	gap: 6px;
+	margin-top: 4px;
+}
+
+.ai-agent-message-edit-actions button {
+	padding: 4px 12px;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	font-size: 12px;
+	cursor: pointer;
+	background: #fff;
+}
+
+.ai-agent-message-edit-actions button:first-child {
+	background: var(--wp-admin-theme-color, #2271b1);
+	color: #fff;
+	border-color: var(--wp-admin-theme-color, #2271b1);
+}
+
+/* Stop button */
+.ai-agent-stop-btn {
+	position: absolute;
+	right: 16px;
+	bottom: 16px;
+	min-width: auto;
+	font-size: 12px;
+	padding: 4px 14px;
+	border-radius: 4px;
+}
+
 /* Input area */
 .ai-agent-input-area {
 	display: flex;
@@ -397,6 +820,28 @@
 /* Context Indicator (full-page) */
 .ai-agent-context-indicator {
 	flex-shrink: 0;
+}
+
+.ai-agent-context-stats {
+	display: flex;
+	justify-content: space-between;
+	padding: 3px 12px 2px;
+	font-size: 11px;
+	color: #787c82;
+}
+
+.ai-agent-context-tokens {
+	font-weight: 500;
+}
+
+.ai-agent-context-detail {
+	font-weight: normal;
+	margin-left: 4px;
+	color: #a7aaad;
+}
+
+.ai-agent-context-pct {
+	font-weight: 500;
 }
 
 .ai-agent-context-bar-track {
@@ -495,6 +940,346 @@
 	margin-right: auto;
 }
 
+/* Slash command menu */
+.ai-agent-slash-menu {
+	position: absolute;
+	bottom: 100%;
+	left: 12px;
+	right: 12px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	margin-bottom: 4px;
+	max-height: 240px;
+	overflow-y: auto;
+	z-index: 100;
+}
+
+.ai-agent-slash-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 14px;
+	cursor: pointer;
+	transition: background 0.1s;
+}
+
+.ai-agent-slash-item:hover,
+.ai-agent-slash-item.is-selected {
+	background: #f0f0f1;
+}
+
+.ai-agent-slash-name {
+	font-weight: 600;
+	font-size: 13px;
+	color: var(--wp-admin-theme-color, #2271b1);
+	min-width: 80px;
+}
+
+.ai-agent-slash-desc {
+	font-size: 13px;
+	color: #50575e;
+}
+
+/* Shortcuts help overlay */
+.ai-agent-shortcuts-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+}
+
+.ai-agent-shortcuts-dialog {
+	background: #fff;
+	border-radius: 8px;
+	width: 400px;
+	max-width: 90vw;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.ai-agent-shortcuts-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px 12px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ai-agent-shortcuts-header h3 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.ai-agent-shortcuts-header button {
+	background: none;
+	border: none;
+	font-size: 20px;
+	cursor: pointer;
+	color: #787c82;
+	padding: 4px 8px;
+}
+
+.ai-agent-shortcuts-list {
+	padding: 12px 20px;
+}
+
+.ai-agent-shortcut-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 0;
+	font-size: 13px;
+}
+
+.ai-agent-shortcut-label {
+	color: #1d2327;
+}
+
+.ai-agent-shortcut-key {
+	background: #f0f0f1;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 2px 8px;
+	font-size: 12px;
+	font-family: monospace;
+	color: #50575e;
+}
+
+.ai-agent-shortcuts-footer {
+	padding: 12px 20px 16px;
+	border-top: 1px solid #dcdcde;
+}
+
+.ai-agent-shortcuts-footer h4 {
+	margin: 0 0 8px;
+	font-size: 13px;
+	color: #50575e;
+}
+
+.ai-agent-shortcuts-footer .ai-agent-shortcut-row span:first-child {
+	font-family: monospace;
+	font-weight: 600;
+	color: var(--wp-admin-theme-color, #2271b1);
+}
+
+/* Export / Import dialogs */
+.ai-agent-export-dialog {
+	background: #fff;
+	border-radius: 8px;
+	width: 420px;
+	max-width: 90vw;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.ai-agent-export-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px 12px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ai-agent-export-header h3 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.ai-agent-export-header button {
+	background: none;
+	border: none;
+	font-size: 20px;
+	cursor: pointer;
+	color: #787c82;
+	padding: 4px 8px;
+}
+
+.ai-agent-export-header button:hover {
+	color: #1d2327;
+}
+
+.ai-agent-export-body {
+	padding: 16px 20px;
+}
+
+.ai-agent-export-option {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 10px 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	cursor: pointer;
+	margin-bottom: 8px;
+	transition: border-color 0.15s;
+}
+
+.ai-agent-export-option:hover {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.ai-agent-export-option input[type="radio"] {
+	margin-top: 3px;
+}
+
+.ai-agent-export-option div strong {
+	display: block;
+	font-size: 13px;
+	margin-bottom: 2px;
+}
+
+.ai-agent-export-option div p {
+	margin: 0;
+	font-size: 12px;
+	color: #787c82;
+}
+
+.ai-agent-export-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 12px 20px 16px;
+	border-top: 1px solid #dcdcde;
+}
+
+.ai-agent-import-dropzone {
+	border: 2px dashed #c3c4c7;
+	border-radius: 6px;
+	padding: 32px 20px;
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.ai-agent-import-dropzone:hover {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	background: #f0f6fc;
+}
+
+.ai-agent-import-dropzone p {
+	margin: 0;
+	color: #787c82;
+	font-size: 13px;
+}
+
+.ai-agent-import-file {
+	text-align: center;
+}
+
+.ai-agent-import-file strong {
+	display: block;
+	font-size: 14px;
+	color: #1d2327;
+	margin-bottom: 4px;
+}
+
+.ai-agent-import-file p {
+	margin: 4px 0 0;
+	font-size: 13px;
+	color: #50575e;
+}
+
+.ai-agent-import-error {
+	color: #d63638;
+	font-size: 13px;
+	margin: 8px 0 0;
+}
+
+/* Tool confirmation dialog */
+.ai-agent-tool-confirm-dialog {
+	background: #fff;
+	border-radius: 8px;
+	width: 480px;
+	max-width: 90vw;
+	max-height: 80vh;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+	display: flex;
+	flex-direction: column;
+}
+
+.ai-agent-tool-confirm-header {
+	display: flex;
+	align-items: center;
+	padding: 16px 20px 12px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ai-agent-tool-confirm-header h3 {
+	margin: 0;
+	font-size: 16px;
+	color: #d63638;
+}
+
+.ai-agent-tool-confirm-body {
+	padding: 16px 20px;
+	overflow-y: auto;
+}
+
+.ai-agent-tool-confirm-desc {
+	margin: 0 0 12px;
+	font-size: 13px;
+	color: #50575e;
+}
+
+.ai-agent-tool-confirm-item {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 10px 12px;
+	margin-bottom: 8px;
+}
+
+.ai-agent-tool-confirm-name {
+	font-weight: 600;
+	font-size: 13px;
+	color: #1d2327;
+	margin-bottom: 6px;
+	font-family: monospace;
+}
+
+.ai-agent-tool-confirm-args {
+	margin: 0;
+	padding: 8px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	font-size: 12px;
+	line-height: 1.5;
+	overflow-x: auto;
+	max-height: 200px;
+	overflow-y: auto;
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.ai-agent-tool-confirm-always {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 12px;
+	font-size: 12px;
+	color: #50575e;
+	cursor: pointer;
+}
+
+.ai-agent-tool-confirm-always input[type="checkbox"] {
+	margin: 0;
+}
+
+.ai-agent-tool-confirm-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 12px 20px 16px;
+	border-top: 1px solid #dcdcde;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
 	.ai-agent-sidebar {
@@ -516,4 +1301,115 @@
 		border-right: none;
 		border-bottom: 1px solid #c3c4c7;
 	}
+}
+
+/* Debug mode badge */
+.ai-agent-debug-badge {
+	display: inline-block;
+	background: #dba617;
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	padding: 1px 6px;
+	border-radius: 3px;
+	margin-left: 8px;
+	vertical-align: middle;
+	line-height: 18px;
+}
+
+/* Debug panel (below assistant messages) */
+.ai-agent-debug-panel {
+	align-self: flex-start;
+	max-width: 85%;
+	margin-top: 2px;
+}
+
+.ai-agent-debug-toggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: none;
+	border: none;
+	padding: 2px 0;
+	cursor: pointer;
+	color: #a7aaad;
+	font-size: 11px;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+	line-height: 1.4;
+	transition: color 0.15s;
+}
+
+.ai-agent-debug-toggle:hover {
+	color: #787c82;
+}
+
+.ai-agent-debug-summary {
+	white-space: nowrap;
+}
+
+.ai-agent-debug-caret {
+	font-size: 10px;
+}
+
+.ai-agent-debug-details {
+	background: #f6f7f7;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	padding: 8px 12px;
+	margin-top: 4px;
+	font-size: 11px;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.ai-agent-debug-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 2px 0;
+	line-height: 1.5;
+}
+
+.ai-agent-debug-label {
+	color: #787c82;
+	white-space: nowrap;
+}
+
+.ai-agent-debug-value {
+	color: #1d2327;
+	font-weight: 500;
+	text-align: right;
+}
+
+.ai-agent-debug-detail {
+	font-weight: normal;
+	color: #a7aaad;
+	margin-left: 4px;
+}
+
+/* Suggestion chips */
+.ai-agent-suggestion-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 8px;
+	padding-left: 4px;
+}
+
+.ai-agent-suggestion-chip.components-button {
+	font-size: 13px;
+	padding: 4px 12px;
+	border-radius: 16px;
+	border: 1px solid #dcdcde;
+	background: #f6f7f7;
+	color: #1e1e1e;
+	height: auto;
+	line-height: 1.4;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.ai-agent-suggestion-chip.components-button:hover {
+	background: #e0e0e0;
+	border-color: #bbb;
 }

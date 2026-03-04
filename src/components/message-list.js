@@ -1,153 +1,48 @@
 /**
  * WordPress dependencies
  */
-import { useSelect } from '@wordpress/data';
-import { useRef, useEffect, useMemo } from '@wordpress/element';
+import { useSelect, useDispatch } from '@wordpress/data';
+import { useRef, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Spinner } from '@wordpress/components';
+import { Button, Spinner } from '@wordpress/components';
 
 /**
  * Internal dependencies
  */
 import STORE_NAME from '../store';
 import ToolCallDetails from './tool-call-details';
+import MarkdownMessage from './markdown-message';
+import MessageActions from './message-actions';
+import DebugPanel from './debug-panel';
 
 /**
- * Lightweight markdown to HTML converter.
+ * Parse suggestion chips from the end of a model response.
+ * Suggestions are lines starting with `[suggestion]`.
  *
- * Handles: headings, bold, italic, inline code, code blocks, links,
- * unordered lists, ordered lists, and paragraphs.
- *
- * @param {string} md Markdown source.
- * @return {string} HTML string.
+ * @param {string} text The full response text.
+ * @return {{ cleanText: string, suggestions: string[] }}
  */
-function markdownToHtml( md ) {
-	if ( ! md ) {
-		return '';
-	}
-
-	// Escape HTML entities first to prevent XSS.
-	let text = md
-		.replace( /&/g, '&amp;' )
-		.replace( /</g, '&lt;' )
-		.replace( />/g, '&gt;' );
-
-	// Fenced code blocks (``` ... ```)
-	text = text.replace(
-		/```(\w*)\n([\s\S]*?)```/g,
-		( _match, _lang, code ) =>
-			`<pre><code>${ code.replace( /\n$/, '' ) }</code></pre>`
-	);
-
-	// Process line-by-line for block elements.
+function parseSuggestions( text ) {
 	const lines = text.split( '\n' );
-	const output = [];
-	let inList = false;
-	let listType = '';
+	const suggestions = [];
+	let lastContentIdx = lines.length - 1;
 
-	for ( let i = 0; i < lines.length; i++ ) {
-		let line = lines[ i ];
-
-		// Skip lines inside <pre> blocks (already handled).
-		if ( line.includes( '<pre>' ) || line.includes( '</pre>' ) ) {
-			if ( inList ) {
-				output.push( listType === 'ul' ? '</ul>' : '</ol>' );
-				inList = false;
-			}
-			output.push( line );
-			continue;
+	// Walk backward to find suggestion lines.
+	for ( let i = lines.length - 1; i >= 0; i-- ) {
+		const trimmed = lines[ i ].trim();
+		if ( trimmed.startsWith( '[suggestion]' ) ) {
+			suggestions.unshift( trimmed.replace( /^\[suggestion\]\s*/, '' ) );
+			lastContentIdx = i - 1;
+		} else if ( trimmed === '' && suggestions.length > 0 ) {
+			// Skip blank lines between content and suggestions.
+			lastContentIdx = i - 1;
+		} else {
+			break;
 		}
-
-		// Horizontal rules.
-		if ( /^---+$/.test( line.trim() ) ) {
-			if ( inList ) {
-				output.push( listType === 'ul' ? '</ul>' : '</ol>' );
-				inList = false;
-			}
-			output.push( '<hr />' );
-			continue;
-		}
-
-		// Headings.
-		const headingMatch = line.match( /^(#{1,6})\s+(.+)$/ );
-		if ( headingMatch ) {
-			if ( inList ) {
-				output.push( listType === 'ul' ? '</ul>' : '</ol>' );
-				inList = false;
-			}
-			const level = headingMatch[ 1 ].length;
-			output.push( `<h${ level }>${ inlineMarkdown( headingMatch[ 2 ] ) }</h${ level }>` );
-			continue;
-		}
-
-		// Unordered list items.
-		const ulMatch = line.match( /^(\s*)[-*]\s+(.+)$/ );
-		if ( ulMatch ) {
-			if ( ! inList || listType !== 'ul' ) {
-				if ( inList ) {
-					output.push( listType === 'ul' ? '</ul>' : '</ol>' );
-				}
-				output.push( '<ul>' );
-				inList = true;
-				listType = 'ul';
-			}
-			output.push( `<li>${ inlineMarkdown( ulMatch[ 2 ] ) }</li>` );
-			continue;
-		}
-
-		// Ordered list items.
-		const olMatch = line.match( /^(\s*)\d+\.\s+(.+)$/ );
-		if ( olMatch ) {
-			if ( ! inList || listType !== 'ol' ) {
-				if ( inList ) {
-					output.push( listType === 'ul' ? '</ul>' : '</ol>' );
-				}
-				output.push( '<ol>' );
-				inList = true;
-				listType = 'ol';
-			}
-			output.push( `<li>${ inlineMarkdown( olMatch[ 2 ] ) }</li>` );
-			continue;
-		}
-
-		// Close list if we hit a non-list line.
-		if ( inList ) {
-			output.push( listType === 'ul' ? '</ul>' : '</ol>' );
-			inList = false;
-		}
-
-		// Empty lines become breaks between paragraphs.
-		if ( ! line.trim() ) {
-			output.push( '' );
-			continue;
-		}
-
-		// Regular paragraph.
-		output.push( `<p>${ inlineMarkdown( line ) }</p>` );
 	}
 
-	if ( inList ) {
-		output.push( listType === 'ul' ? '</ul>' : '</ol>' );
-	}
-
-	return output.join( '\n' );
-}
-
-/**
- * Convert inline markdown: bold, italic, code, links.
- */
-function inlineMarkdown( text ) {
-	return text
-		// Inline code.
-		.replace( /`([^`]+)`/g, '<code>$1</code>' )
-		// Bold + italic.
-		.replace( /\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>' )
-		// Bold.
-		.replace( /\*\*(.+?)\*\*/g, '<strong>$1</strong>' )
-		// Italic.
-		.replace( /\*(.+?)\*/g, '<em>$1</em>' )
-		// Links.
-		.replace( /\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>' );
+	const cleanText = lines.slice( 0, lastContentIdx + 1 ).join( '\n' ).trimEnd();
+	return { cleanText, suggestions };
 }
 
 function MessageBubble( { role, text } ) {
@@ -157,24 +52,37 @@ function MessageBubble( { role, text } ) {
 		system: 'ai-agent-bubble ai-agent-system',
 	};
 
-	const html = useMemo( () => {
-		if ( role === 'model' ) {
-			return markdownToHtml( text );
-		}
-		return null;
-	}, [ role, text ] );
-
-	if ( html ) {
+	if ( role === 'model' ) {
 		return (
-			<div
-				className={ classMap[ role ] || classMap.system }
-				dangerouslySetInnerHTML={ { __html: html } }
-			/>
+			<div className={ classMap.model }>
+				<MarkdownMessage content={ text } />
+			</div>
 		);
 	}
 
 	return (
 		<div className={ classMap[ role ] || classMap.system }>{ text }</div>
+	);
+}
+
+function SuggestionChips( { suggestions, onSelect } ) {
+	if ( ! suggestions?.length ) {
+		return null;
+	}
+
+	return (
+		<div className="ai-agent-suggestion-chips">
+			{ suggestions.map( ( suggestion, i ) => (
+				<Button
+					key={ i }
+					variant="tertiary"
+					className="ai-agent-suggestion-chip"
+					onClick={ () => onSelect( suggestion ) }
+				>
+					{ suggestion }
+				</Button>
+			) ) }
+		</div>
 	);
 }
 
@@ -189,18 +97,29 @@ function extractText( message ) {
 }
 
 export default function MessageList() {
-	const { messages, sending } = useSelect( ( select ) => {
+	const { messages, sending, debugMode } = useSelect( ( select ) => {
 		const store = select( STORE_NAME );
 		return {
 			messages: store.getCurrentSessionMessages(),
 			sending: store.isSending(),
+			debugMode: store.isDebugMode(),
 		};
 	}, [] );
 
-	const bottomRef = useRef( null );
+	const { sendMessage } = useDispatch( STORE_NAME );
+	const messagesRef = useRef( null );
 
 	useEffect( () => {
-		bottomRef.current?.scrollIntoView( { behavior: 'smooth' } );
+		const el = messagesRef.current;
+		if ( el ) {
+			// Save page scroll position — setting scrollTop on a flex child
+			// can inadvertently scroll the outer page in some layouts.
+			const savedY = window.scrollY;
+			el.scrollTop = el.scrollHeight;
+			if ( window.scrollY !== savedY ) {
+				window.scrollTo( 0, savedY );
+			}
+		}
 	}, [ messages, sending ] );
 
 	const visibleMessages = messages.filter( ( msg ) => {
@@ -219,23 +138,47 @@ export default function MessageList() {
 	} );
 
 	return (
-		<div className="ai-agent-messages">
+		<div className="ai-agent-messages" ref={ messagesRef }>
 			{ visibleMessages.length === 0 && ! sending && (
 				<div className="ai-agent-empty-state">
 					{ __( 'Send a message to start a conversation.', 'ai-agent' ) }
 				</div>
 			) }
 			{ visibleMessages.map( ( msg, i ) => {
-				const text = extractText( msg );
-				if ( ! text ) {
+				const rawText = extractText( msg );
+				if ( ! rawText ) {
 					return null;
 				}
+
+				const isModel = msg.role === 'model';
+				const { cleanText, suggestions } = isModel
+					? parseSuggestions( rawText )
+					: { cleanText: rawText, suggestions: [] };
+
+				const isLastModel =
+					isModel &&
+					! sending &&
+					i === visibleMessages.length - 1;
+
 				return (
-					<div key={ i }>
+					<div key={ i } className="ai-agent-message-row">
 						{ msg.toolCalls?.length > 0 && (
 							<ToolCallDetails toolCalls={ msg.toolCalls } />
 						) }
-						<MessageBubble role={ msg.role } text={ text } />
+						<MessageBubble role={ msg.role } text={ cleanText } />
+						<MessageActions
+							message={ msg }
+							index={ i }
+						/>
+						{ debugMode && isModel && msg.debug && (
+							<DebugPanel debug={ msg.debug } />
+						) }
+						{ isLastModel && (
+							<SuggestionChips
+								suggestions={ suggestions }
+								onSelect={ sendMessage }
+							/>
+						) }
 					</div>
 				);
 			} ) }
@@ -245,7 +188,6 @@ export default function MessageList() {
 					{ __( 'Thinking...', 'ai-agent' ) }
 				</div>
 			) }
-			<div ref={ bottomRef } />
 		</div>
 	);
 }

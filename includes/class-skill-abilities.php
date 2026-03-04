@@ -7,6 +7,10 @@
 
 namespace AiAgent;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class Skill_Abilities {
 
 	/**

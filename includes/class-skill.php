@@ -29,6 +29,7 @@ class Skill {
 		$table = self::table_name();
 
 		if ( null !== $enabled ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 			return $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT * FROM %i WHERE enabled = %d ORDER BY name ASC",
@@ -38,6 +39,7 @@ class Skill {
 			);
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM %i ORDER BY name ASC",
@@ -55,6 +57,7 @@ class Skill {
 	public static function get( int $id ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		return $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM %i WHERE id = %d",
@@ -73,6 +76,7 @@ class Skill {
 	public static function get_by_slug( string $slug ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		return $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM %i WHERE slug = %s",
@@ -91,7 +95,8 @@ class Skill {
 	public static function create( array $data ) {
 		global $wpdb;
 
-		$now    = current_time( 'mysql', true );
+		$now = current_time( 'mysql', true );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table query; caching not applicable.
 		$result = $wpdb->insert(
 			self::table_name(),
 			[
@@ -147,6 +152,7 @@ class Skill {
 			}
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		$result = $wpdb->update(
 			self::table_name(),
 			$data,
@@ -177,6 +183,7 @@ class Skill {
 			return 'builtin';
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
 		$result = $wpdb->delete(
 			self::table_name(),
 			[ 'id' => $id ],

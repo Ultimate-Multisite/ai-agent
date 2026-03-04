@@ -10,6 +10,16 @@ import { __ } from '@wordpress/i18n';
  */
 import STORE_NAME from '../store';
 
+function formatTokens( n ) {
+	if ( n >= 1_000_000 ) {
+		return ( n / 1_000_000 ).toFixed( 1 ) + 'M';
+	}
+	if ( n >= 1_000 ) {
+		return ( n / 1_000 ).toFixed( 1 ) + 'K';
+	}
+	return n.toString();
+}
+
 export default function ContextIndicator() {
 	const { percentage, isWarning, tokenUsage } = useSelect(
 		( select ) => ( {
@@ -35,8 +45,25 @@ export default function ContextIndicator() {
 		barColor = '#dba617'; // yellow
 	}
 
+	const totalTokens = tokenUsage.prompt + tokenUsage.completion;
+
 	return (
 		<div className="ai-agent-context-indicator">
+			<div className="ai-agent-context-stats">
+				<span className="ai-agent-context-tokens">
+					{ formatTokens( totalTokens ) }{ ' ' }
+					{ __( 'tokens', 'ai-agent' ) }
+					<span className="ai-agent-context-detail">
+						({ formatTokens( tokenUsage.prompt ) }{ ' ' }
+						{ __( 'in', 'ai-agent' ) } /{ ' ' }
+						{ formatTokens( tokenUsage.completion ) }{ ' ' }
+						{ __( 'out', 'ai-agent' ) })
+					</span>
+				</span>
+				<span className="ai-agent-context-pct">
+					{ Math.round( clampedPct ) }%
+				</span>
+			</div>
 			<div className="ai-agent-context-bar-track">
 				<div
 					className="ai-agent-context-bar-fill"

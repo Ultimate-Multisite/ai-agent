@@ -1,0 +1,280 @@
+<?php
+/**
+ * Scheduled Automations model — CRUD for cron-based AI tasks.
+ *
+ * @package AiAgent
+ */
+
+namespace AiAgent;
+
+class Automations {
+
+	const VALID_SCHEDULES = [ 'hourly', 'twicedaily', 'daily', 'weekly' ];
+
+	/**
+	 * Get the automations table name.
+	 */
+	public static function table_name(): string {
+		global $wpdb;
+		return $wpdb->prefix . 'ai_agent_automations';
+	}
+
+	/**
+	 * List all automations.
+	 *
+	 * @param bool $enabled_only Only return enabled automations.
+	 * @return array
+	 */
+	public static function list( bool $enabled_only = false ): array {
+		global $wpdb;
+
+		$table = self::table_name();
+		$where = $enabled_only ? 'WHERE enabled = 1' : '';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom table query; table/column names from internal methods, not user input.
+		$rows = $wpdb->get_results( "SELECT * FROM {$table} {$where} ORDER BY name ASC" );
+
+		return array_map( [ __CLASS__, 'decode_row' ], $rows ?: [] );
+	}
+
+	/**
+	 * Get a single automation by ID.
+	 *
+	 * @param int $id Automation ID.
+	 * @return array|null
+	 */
+	public static function get( int $id ): ?array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM %i WHERE id = %d", self::table_name(), $id )
+		);
+
+		return $row ? self::decode_row( $row ) : null;
+	}
+
+	/**
+	 * Create a new automation.
+	 *
+	 * @param array $data Automation data.
+	 * @return int|false Inserted ID or false.
+	 */
+	public static function create( array $data ) {
+		global $wpdb;
+
+		$now = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table query; caching not applicable.
+		$result = $wpdb->insert(
+			self::table_name(),
+			[
+				'name'            => sanitize_text_field( $data['name'] ?? '' ),
+				'description'     => sanitize_textarea_field( $data['description'] ?? '' ),
+				'prompt'          => wp_kses_post( $data['prompt'] ?? '' ),
+				'schedule'        => sanitize_text_field( $data['schedule'] ?? 'daily' ),
+				'cron_expression' => sanitize_text_field( $data['cron_expression'] ?? '' ),
+				'tool_profile'    => sanitize_text_field( $data['tool_profile'] ?? '' ),
+				'max_iterations'  => absint( $data['max_iterations'] ?? 10 ),
+				'enabled'         => isset( $data['enabled'] ) ? (int) $data['enabled'] : 0,
+				'last_run_at'     => null,
+				'next_run_at'     => null,
+				'run_count'       => 0,
+				'created_at'      => $now,
+				'updated_at'      => $now,
+			],
+			[ '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%d', '%s', '%s' ]
+		);
+
+		if ( ! $result ) {
+			return false;
+		}
+
+		$id = (int) $wpdb->insert_id;
+
+		// Schedule cron if enabled.
+		if ( ! empty( $data['enabled'] ) ) {
+			Automation_Runner::schedule( $id, $data['schedule'] ?? 'daily' );
+		}
+
+		return $id;
+	}
+
+	/**
+	 * Update an existing automation.
+	 *
+	 * @param int   $id   Automation ID.
+	 * @param array $data Fields to update.
+	 * @return bool
+	 */
+	public static function update( int $id, array $data ): bool {
+		global $wpdb;
+
+		$existing = self::get( $id );
+		if ( ! $existing ) {
+			return false;
+		}
+
+		$update = [];
+		$formats = [];
+
+		$string_fields = [ 'name', 'description', 'prompt', 'schedule', 'cron_expression', 'tool_profile' ];
+		foreach ( $string_fields as $field ) {
+			if ( isset( $data[ $field ] ) ) {
+				$sanitize = 'prompt' === $field ? 'wp_kses_post' : 'sanitize_text_field';
+				if ( 'description' === $field ) {
+					$sanitize = 'sanitize_textarea_field';
+				}
+				$update[ $field ] = $sanitize( $data[ $field ] );
+				$formats[] = '%s';
+			}
+		}
+
+		if ( isset( $data['max_iterations'] ) ) {
+			$update['max_iterations'] = absint( $data['max_iterations'] );
+			$formats[] = '%d';
+		}
+
+		if ( isset( $data['enabled'] ) ) {
+			$update['enabled'] = (int) $data['enabled'];
+			$formats[] = '%d';
+		}
+
+		if ( empty( $update ) ) {
+			return true;
+		}
+
+		$update['updated_at'] = current_time( 'mysql', true );
+		$formats[] = '%s';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
+		$result = $wpdb->update(
+			self::table_name(),
+			$update,
+			[ 'id' => $id ],
+			$formats,
+			[ '%d' ]
+		);
+
+		// Reschedule cron based on new state.
+		$new_enabled  = $data['enabled'] ?? $existing['enabled'];
+		$new_schedule = $data['schedule'] ?? $existing['schedule'];
+
+		Automation_Runner::unschedule( $id );
+		if ( $new_enabled ) {
+			Automation_Runner::schedule( $id, $new_schedule );
+		}
+
+		return $result !== false;
+	}
+
+	/**
+	 * Delete an automation.
+	 *
+	 * @param int $id Automation ID.
+	 * @return bool
+	 */
+	public static function delete( int $id ): bool {
+		global $wpdb;
+
+		Automation_Runner::unschedule( $id );
+
+		// Delete associated logs.
+		Automation_Logs::delete_for_automation( $id );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
+		$result = $wpdb->delete(
+			self::table_name(),
+			[ 'id' => $id ],
+			[ '%d' ]
+		);
+
+		return $result !== false;
+	}
+
+	/**
+	 * Update run metadata after execution.
+	 *
+	 * @param int    $id       Automation ID.
+	 * @param string $run_time MySQL datetime of the run.
+	 */
+	public static function record_run( int $id, string $run_time ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query; caching not applicable.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET last_run_at = %s, run_count = run_count + 1, updated_at = %s WHERE id = %d",
+				self::table_name(),
+				$run_time,
+				$run_time,
+				$id
+			)
+		);
+	}
+
+	/**
+	 * Get pre-built automation templates.
+	 *
+	 * @return array
+	 */
+	public static function get_templates(): array {
+		return [
+			[
+				'name'        => __( 'Daily Site Health Report', 'ai-agent' ),
+				'description' => __( 'Run a comprehensive site health check and report findings.', 'ai-agent' ),
+				'prompt'      => "Run a site health check. Check for:\n1. WordPress and plugin updates available\n2. PHP errors in the log\n3. Disk space usage\n4. Database optimization status\n5. Security concerns\n\nProvide a brief summary of the site's health status.",
+				'schedule'    => 'daily',
+			],
+			[
+				'name'        => __( 'Weekly Plugin Update Check', 'ai-agent' ),
+				'description' => __( 'Check for plugin updates and report what needs updating.', 'ai-agent' ),
+				'prompt'      => "List all plugins that have updates available. For each:\n- Plugin name and current version\n- Available version\n- Whether it's a major, minor, or patch update\n\nDo NOT update any plugins — just report.",
+				'schedule'    => 'weekly',
+			],
+			[
+				'name'        => __( 'Content Moderation', 'ai-agent' ),
+				'description' => __( 'Review recent comments for spam or inappropriate content.', 'ai-agent' ),
+				'prompt'      => 'Review pending comments from the last 24 hours. Flag any that appear to be spam, contain inappropriate language, or are off-topic. Provide a summary of reviewed vs flagged comments.',
+				'schedule'    => 'daily',
+			],
+			[
+				'name'        => __( 'Broken Link Check', 'ai-agent' ),
+				'description' => __( 'Scan recent posts for broken links.', 'ai-agent' ),
+				'prompt'      => 'Check the 10 most recent published posts for any broken external links. For each broken link found, report the post title, the broken URL, and the HTTP status code.',
+				'schedule'    => 'weekly',
+			],
+			[
+				'name'        => __( 'Database Optimization', 'ai-agent' ),
+				'description' => __( 'Clean up transients, revisions, and optimize tables.', 'ai-agent' ),
+				'prompt'      => "Perform database maintenance:\n1. Delete expired transients\n2. Report how many post revisions exist\n3. Report autoloaded option size\n4. List any database tables that could benefit from optimization\n\nDo NOT delete revisions — just report.",
+				'schedule'    => 'weekly',
+			],
+		];
+	}
+
+	/**
+	 * Decode a database row into an array with parsed JSON.
+	 *
+	 * @param object $row Database row.
+	 * @return array
+	 */
+	private static function decode_row( object $row ): array {
+		return [
+			'id'              => (int) $row->id,
+			'name'            => $row->name,
+			'description'     => $row->description,
+			'prompt'          => $row->prompt,
+			'schedule'        => $row->schedule,
+			'cron_expression' => $row->cron_expression,
+			'tool_profile'    => $row->tool_profile,
+			'max_iterations'  => (int) $row->max_iterations,
+			'enabled'         => (bool) $row->enabled,
+			'last_run_at'     => $row->last_run_at,
+			'next_run_at'     => $row->next_run_at,
+			'run_count'       => (int) $row->run_count,
+			'created_at'      => $row->created_at,
+			'updated_at'      => $row->updated_at,
+		];
+	}
+}

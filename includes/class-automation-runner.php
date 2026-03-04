@@ -1,0 +1,161 @@
+<?php
+/**
+ * Automation Runner — cron handler that fires Agent_Loop for scheduled automations.
+ *
+ * @package AiAgent
+ */
+
+namespace AiAgent;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class Automation_Runner {
+
+	const CRON_HOOK = 'ai_agent_run_automation';
+
+	/**
+	 * Register hooks.
+	 */
+	public static function register(): void {
+		add_action( self::CRON_HOOK, [ __CLASS__, 'run' ] );
+
+		// Register custom weekly schedule if not already available.
+		add_filter( 'cron_schedules', [ __CLASS__, 'add_cron_schedules' ] );
+	}
+
+	/**
+	 * Add custom cron schedules.
+	 *
+	 * @param array $schedules Existing schedules.
+	 * @return array
+	 */
+	public static function add_cron_schedules( array $schedules ): array {
+		if ( ! isset( $schedules['weekly'] ) ) {
+			$schedules['weekly'] = [
+				'interval' => WEEK_IN_SECONDS,
+				'display'  => __( 'Once Weekly', 'ai-agent' ),
+			];
+		}
+		return $schedules;
+	}
+
+	/**
+	 * Schedule a cron event for an automation.
+	 *
+	 * @param int    $automation_id Automation ID.
+	 * @param string $schedule      WordPress cron schedule name.
+	 */
+	public static function schedule( int $automation_id, string $schedule ): void {
+		if ( ! wp_next_scheduled( self::CRON_HOOK, [ $automation_id ] ) ) {
+			wp_schedule_event( time(), $schedule, self::CRON_HOOK, [ $automation_id ] );
+		}
+	}
+
+	/**
+	 * Unschedule a cron event for an automation.
+	 *
+	 * @param int $automation_id Automation ID.
+	 */
+	public static function unschedule( int $automation_id ): void {
+		$timestamp = wp_next_scheduled( self::CRON_HOOK, [ $automation_id ] );
+		if ( $timestamp ) {
+			wp_unschedule_event( $timestamp, self::CRON_HOOK, [ $automation_id ] );
+		}
+		// Also clear any recurring schedules.
+		wp_clear_scheduled_hook( self::CRON_HOOK, [ $automation_id ] );
+	}
+
+	/**
+	 * Run an automation (fired by WP Cron or manually).
+	 *
+	 * @param int $automation_id Automation ID.
+	 * @return array|null Run result or null if automation not found/disabled.
+	 */
+	public static function run( int $automation_id ): ?array {
+		$automation = Automations::get( $automation_id );
+		if ( ! $automation ) {
+			return null;
+		}
+
+		$start_time = microtime( true );
+		$now        = current_time( 'mysql', true );
+
+		// Ensure provider credentials are available.
+		Agent_Loop::ensure_provider_credentials_static();
+
+		// Build agent loop options.
+		$settings = Settings::get();
+		$options  = [
+			'max_iterations' => $automation['max_iterations'] ?: ( $settings['max_iterations'] ?: 10 ),
+			'provider_id'    => $settings['default_provider'] ?? '',
+			'model_id'       => $settings['default_model'] ?? '',
+		];
+
+		$loop   = new Agent_Loop( $automation['prompt'], [], [], $options );
+		$result = $loop->run();
+
+		$duration = round( ( microtime( true ) - $start_time ) * 1000 );
+
+		// Determine success.
+		$is_error = is_wp_error( $result );
+		$status   = $is_error ? 'error' : 'success';
+
+		// Extract data from result.
+		$reply       = $is_error ? $result->get_error_message() : ( $result['reply'] ?? '' );
+		$tool_calls  = $is_error ? [] : ( $result['tool_calls'] ?? [] );
+		$token_usage = $is_error ? [] : ( $result['token_usage'] ?? [] );
+
+		// Log the run.
+		$log_data = [
+			'automation_id'     => $automation_id,
+			'status'            => $status,
+			'reply'             => $reply,
+			'tool_calls'        => $tool_calls,
+			'prompt_tokens'     => $token_usage['prompt'] ?? 0,
+			'completion_tokens' => $token_usage['completion'] ?? 0,
+			'duration_ms'       => $duration,
+			'error_message'     => $is_error ? $result->get_error_message() : '',
+		];
+
+		Automation_Logs::create( $log_data );
+
+		// Update automation metadata.
+		Automations::record_run( $automation_id, $now );
+
+		/**
+		 * Fires after a scheduled automation completes.
+		 *
+		 * @param int   $automation_id The automation ID.
+		 * @param array $log_data      The log data for this run.
+		 * @param array $automation    The automation definition.
+		 */
+		do_action( 'ai_agent_automation_complete', $automation_id, $log_data, $automation );
+
+		return $log_data;
+	}
+
+	/**
+	 * Reschedule all enabled automations (called on activation).
+	 */
+	public static function reschedule_all(): void {
+		$automations = Automations::list( true );
+
+		foreach ( $automations as $automation ) {
+			self::unschedule( $automation['id'] );
+			self::schedule( $automation['id'], $automation['schedule'] );
+		}
+	}
+
+	/**
+	 * Unschedule all automations (called on deactivation).
+	 */
+	public static function unschedule_all(): void {
+		$automations = Automations::list();
+
+		foreach ( $automations as $automation ) {
+			self::unschedule( $automation['id'] );
+		}
+	}
+}

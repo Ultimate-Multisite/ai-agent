@@ -206,3 +206,210 @@
 	display: flex;
 	gap: 2px;
 }
+
+/* Usage Dashboard */
+.ai-agent-usage-dashboard {
+	min-height: 200px;
+}
+
+.ai-agent-usage-loading {
+	padding: 40px;
+	text-align: center;
+}
+
+.ai-agent-usage-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.ai-agent-usage-header h3 {
+	margin: 0;
+	font-size: 15px;
+}
+
+.ai-agent-usage-header .components-select-control {
+	min-width: 160px;
+}
+
+.ai-agent-usage-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 12px;
+	margin-bottom: 24px;
+}
+
+.ai-agent-usage-card {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 14px 16px;
+	text-align: center;
+}
+
+.ai-agent-usage-card-label {
+	font-size: 12px;
+	color: #50575e;
+	margin-bottom: 4px;
+}
+
+.ai-agent-usage-card-value {
+	font-size: 22px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.ai-agent-usage-breakdown h4 {
+	margin: 0 0 12px;
+	font-size: 14px;
+}
+
+.ai-agent-usage-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.ai-agent-usage-table th {
+	text-align: left;
+	padding: 8px 10px;
+	border-bottom: 2px solid #dcdcde;
+	font-weight: 600;
+	font-size: 12px;
+	color: #50575e;
+}
+
+.ai-agent-usage-table td {
+	padding: 8px 10px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.ai-agent-usage-bar {
+	width: 80px;
+	height: 8px;
+	background: #e0e0e0;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.ai-agent-usage-bar-fill {
+	height: 100%;
+	background: var(--wp-admin-theme-color, #2271b1);
+	border-radius: 4px;
+	transition: width 0.3s;
+}
+
+/* Test Result */
+.ai-agent-test-result {
+	margin-top: 12px;
+	padding: 12px;
+	border-radius: 4px;
+	font-size: 13px;
+}
+
+.ai-agent-test-result.is-success {
+	background: #edfaef;
+	border: 1px solid #00a32a;
+}
+
+.ai-agent-test-result.is-error {
+	background: #fcf0f1;
+	border: 1px solid #d63638;
+}
+
+.ai-agent-test-result pre {
+	margin: 8px 0 0;
+	white-space: pre-wrap;
+	word-break: break-all;
+	font-size: 12px;
+	max-height: 200px;
+	overflow: auto;
+}
+
+/* Trigger Info */
+.ai-agent-trigger-info {
+	background: #f0f6fc;
+	border: 1px solid #c3d1e0;
+	border-radius: 4px;
+	padding: 10px 14px;
+	font-size: 13px;
+}
+
+.ai-agent-trigger-info .description {
+	margin: 4px 0;
+}
+
+/* Automation Logs */
+.ai-agent-automation-logs {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #dcdcde;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ai-agent-log-entry {
+	padding: 8px 12px;
+	border-radius: 4px;
+	font-size: 12px;
+	border: 1px solid #dcdcde;
+}
+
+.ai-agent-log--success {
+	border-color: #c3e6cb;
+	background: #f8fcf8;
+}
+
+.ai-agent-log--error {
+	border-color: #f5c2c7;
+	background: #fdf0f1;
+}
+
+.ai-agent-log-meta {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	color: #646970;
+}
+
+.ai-agent-log-status {
+	font-weight: 600;
+	text-transform: uppercase;
+	font-size: 11px;
+	padding: 1px 6px;
+	border-radius: 3px;
+}
+
+.ai-agent-log-status--success {
+	color: #00a32a;
+	background: #edfaef;
+}
+
+.ai-agent-log-status--error {
+	color: #d63638;
+	background: #fcf0f1;
+}
+
+.ai-agent-log-error {
+	margin: 4px 0 0;
+	color: #d63638;
+}
+
+.ai-agent-log-reply {
+	margin: 4px 0 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-size: 12px;
+	max-height: 150px;
+	overflow: auto;
+	background: #f6f7f7;
+	padding: 8px;
+	border-radius: 3px;
+}
+
+/* Tab overflow for many tabs */
+.ai-agent-settings .components-tab-panel__tabs {
+	flex-wrap: wrap;
+}
