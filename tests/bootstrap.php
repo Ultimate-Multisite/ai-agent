@@ -5,13 +5,10 @@
  * @package AiAgent
  */
 
-// Load Composer autoloader first - required for PSR interfaces used by compat layer.
+// Load standard Composer autoloader (not Jetpack) - required for PSR interfaces used by compat layer.
+// Jetpack Autoloader requires WordPress functions, so we use the standard autoloader for tests.
 $plugin_dir = dirname( __DIR__ );
-if ( file_exists( $plugin_dir . '/vendor/autoload_packages.php' ) ) {
-	require_once $plugin_dir . '/vendor/autoload_packages.php';
-} else {
-	require_once $plugin_dir . '/vendor/autoload.php';
-}
+require_once $plugin_dir . '/vendor/autoload.php';
 
 $_tests_dir = getenv('WP_TESTS_DIR');
 if ( ! $_tests_dir ) {
