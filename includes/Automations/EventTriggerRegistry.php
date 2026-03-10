@@ -37,7 +37,7 @@ class EventTriggerRegistry {
 	 * @return array
 	 */
 	public static function get_grouped(): array {
-		$all = self::get_all();
+		$all     = self::get_all();
 		$grouped = [];
 
 		foreach ( $all as $trigger ) {
