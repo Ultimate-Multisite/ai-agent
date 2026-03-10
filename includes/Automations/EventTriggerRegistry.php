@@ -62,7 +62,7 @@ class EventTriggerRegistry {
 	 */
 	public static function get( string $hook_name ): ?array {
 		foreach ( self::get_all() as $trigger ) {
-			if ( $trigger['hook_name'] === $hook_name ) {
+			if ( isset( $trigger['hook_name'] ) && $trigger['hook_name'] === $hook_name ) {
 				return $trigger;
 			}
 		}
