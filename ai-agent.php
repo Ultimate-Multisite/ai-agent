@@ -7,13 +7,13 @@
  * Author:      Dave
  * License:     GPL-2.0-or-later
  * Requires at least: 6.9
- * Requires PHP: 7.4
+ * Requires PHP: 8.2
  * Text Domain: ai-agent
  *
  * @package AiAgent
  */
 
-namespace AiAgent;
+declare(strict_types=1);
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -22,55 +22,45 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'AI_AGENT_DIR', __DIR__ );
 define( 'AI_AGENT_URL', plugin_dir_url( __FILE__ ) );
 
+// Load Jetpack Autoloader for PSR-4 autoloading with version conflict resolution.
+// Jetpack Autoloader ensures the newest version of shared packages (like php-ai-client) is used.
+if ( file_exists( AI_AGENT_DIR . '/vendor/autoload_packages.php' ) ) {
+	require_once AI_AGENT_DIR . '/vendor/autoload_packages.php';
+} else {
+	require_once AI_AGENT_DIR . '/vendor/autoload.php';
+}
+
 // Load compatibility layer for WordPress < 7.0 (Abilities API + AI Client SDK).
 require_once AI_AGENT_DIR . '/compat/load.php';
 
-require_once AI_AGENT_DIR . '/includes/class-database.php';
-require_once AI_AGENT_DIR . '/includes/class-settings.php';
-require_once AI_AGENT_DIR . '/includes/class-memory.php';
-require_once AI_AGENT_DIR . '/includes/class-memory-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-skill.php';
-require_once AI_AGENT_DIR . '/includes/class-skill-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-knowledge-database.php';
-require_once AI_AGENT_DIR . '/includes/class-chunker.php';
-require_once AI_AGENT_DIR . '/includes/class-document-parser.php';
-require_once AI_AGENT_DIR . '/includes/class-knowledge.php';
-require_once AI_AGENT_DIR . '/includes/class-knowledge-hooks.php';
-require_once AI_AGENT_DIR . '/includes/class-knowledge-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-context-providers.php';
-require_once AI_AGENT_DIR . '/includes/class-tool-discovery.php';
-require_once AI_AGENT_DIR . '/includes/class-stock-image-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-seo-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-content-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-marketing-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-markdown-to-blocks.php';
-require_once AI_AGENT_DIR . '/includes/class-block-abilities.php';
-require_once AI_AGENT_DIR . '/includes/class-custom-tools.php';
-require_once AI_AGENT_DIR . '/includes/class-custom-tool-executor.php';
-require_once AI_AGENT_DIR . '/includes/class-tool-profiles.php';
-require_once AI_AGENT_DIR . '/includes/class-conversation-trimmer.php';
-require_once AI_AGENT_DIR . '/includes/class-automations.php';
-require_once AI_AGENT_DIR . '/includes/class-automation-logs.php';
-require_once AI_AGENT_DIR . '/includes/class-automation-runner.php';
-require_once AI_AGENT_DIR . '/includes/class-event-automations.php';
-require_once AI_AGENT_DIR . '/includes/class-event-trigger-registry.php';
-require_once AI_AGENT_DIR . '/includes/class-placeholder-resolver.php';
-require_once AI_AGENT_DIR . '/includes/class-event-trigger-handler.php';
-require_once AI_AGENT_DIR . '/includes/class-agent-loop.php';
-require_once AI_AGENT_DIR . '/includes/class-cost-calculator.php';
-require_once AI_AGENT_DIR . '/includes/class-export.php';
-require_once AI_AGENT_DIR . '/includes/class-rest-controller.php';
-require_once AI_AGENT_DIR . '/includes/class-admin-page.php';
-require_once AI_AGENT_DIR . '/includes/class-floating-widget.php';
+use AiAgent\Abilities\BlockAbilities;
+use AiAgent\Abilities\ContentAbilities;
+use AiAgent\Abilities\KnowledgeAbilities;
+use AiAgent\Abilities\MarketingAbilities;
+use AiAgent\Abilities\MemoryAbilities;
+use AiAgent\Abilities\SeoAbilities;
+use AiAgent\Abilities\SkillAbilities;
+use AiAgent\Abilities\StockImageAbilities;
+use AiAgent\Admin\AdminPage;
+use AiAgent\Admin\FloatingWidget;
+use AiAgent\Automations\AutomationRunner;
+use AiAgent\Automations\EventTriggerHandler;
+use AiAgent\CLI\CliCommand;
+use AiAgent\Core\Database;
+use AiAgent\Core\Settings;
+use AiAgent\Knowledge\KnowledgeHooks;
+use AiAgent\REST\RestController;
+use AiAgent\Tools\CustomToolExecutor;
+use AiAgent\Tools\ToolDiscovery;
 
 register_activation_hook( __FILE__, [ Database::class, 'install' ] );
-register_activation_hook( __FILE__, [ Automation_Runner::class, 'reschedule_all' ] );
-register_deactivation_hook( __FILE__, [ Knowledge_Hooks::class, 'deactivate' ] );
-register_deactivation_hook( __FILE__, [ Automation_Runner::class, 'unschedule_all' ] );
+register_activation_hook( __FILE__, [ AutomationRunner::class, 'reschedule_all' ] );
+register_deactivation_hook( __FILE__, [ KnowledgeHooks::class, 'deactivate' ] );
+register_deactivation_hook( __FILE__, [ AutomationRunner::class, 'unschedule_all' ] );
 add_action( 'admin_init', [ Database::class, 'install' ] );
 
-add_action( 'rest_api_init', [ Rest_Controller::class, 'register_routes' ] );
-add_action( 'admin_menu', [ Admin_Page::class, 'register' ] );
+add_action( 'rest_api_init', [ RestController::class, 'register_routes' ] );
+add_action( 'admin_menu', [ AdminPage::class, 'register' ] );
 add_action( 'admin_menu', [ Settings::class, 'register' ] );
 
 // Register ability category.
@@ -84,44 +74,43 @@ add_action( 'wp_abilities_api_categories_init', function () {
 } );
 
 // Memory abilities.
-Memory_Abilities::register();
+MemoryAbilities::register();
 
 // Skill abilities.
-Skill_Abilities::register();
+SkillAbilities::register();
 
 // Knowledge abilities and hooks.
-Knowledge_Abilities::register();
-Knowledge_Hooks::register();
+KnowledgeAbilities::register();
+KnowledgeHooks::register();
 
 // Tool discovery meta-tools.
-Tool_Discovery::register();
+ToolDiscovery::register();
 
 // Stock image import ability.
-Stock_Image_Abilities::register();
+StockImageAbilities::register();
 
 // SEO, content, and marketing abilities.
-SEO_Abilities::register();
-Content_Abilities::register();
-Marketing_Abilities::register();
+SeoAbilities::register();
+ContentAbilities::register();
+MarketingAbilities::register();
 
 // Block content abilities (markdown-to-blocks, block discovery, content creation).
-Block_Abilities::register();
+BlockAbilities::register();
 
 // Custom tool abilities (registered as WordPress Abilities).
-Custom_Tool_Executor::register();
+CustomToolExecutor::register();
 
 // Automation cron handler.
-Automation_Runner::register();
+AutomationRunner::register();
 
 // Event-driven automation trigger handler.
-Event_Trigger_Handler::register();
-add_action( 'ai_agent_run_event_automation', [ Event_Trigger_Handler::class, 'execute_event_run' ] );
+EventTriggerHandler::register();
+add_action( 'ai_agent_run_event_automation', [ EventTriggerHandler::class, 'execute_event_run' ] );
 
 // Floating widget on all admin pages.
-Floating_Widget::register();
+FloatingWidget::register();
 
 // WP-CLI command.
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-	require_once AI_AGENT_DIR . '/includes/class-cli-command.php';
-	\WP_CLI::add_command( 'ai-agent', CLI_Command::class );
+	\WP_CLI::add_command( 'ai-agent', CliCommand::class );
 }

@@ -10,15 +10,31 @@
 		}
 	],
 	"require": {
-		"php": ">=7.4",
-		"smalot/pdfparser": "^2.0"
+		"php": ">=8.2",
+		"automattic/jetpack-autoloader": "^3.0 || ^4.0 || ^5.0",
+		"smalot/pdfparser": "^2.0",
+		"wordpress/php-ai-client": "^1.2"
+	},
+	"require-dev": {
+		"phpstan/phpstan": "^2.0",
+		"phpunit/phpunit": "^9.6 || ^10.0",
+		"szepeviktor/phpstan-wordpress": "^2.0",
+		"yoast/phpunit-polyfills": "^3.0"
 	},
 	"autoload": {
-		"classmap": [
-			"includes/"
-		]
+		"psr-4": {
+			"AiAgent\\": "includes/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"AiAgent\\Tests\\": "tests/AiAgent/"
+		}
 	},
 	"config": {
+		"allow-plugins": {
+			"automattic/jetpack-autoloader": true
+		},
 		"preferred-install": "dist",
 		"sort-packages": true
 	},

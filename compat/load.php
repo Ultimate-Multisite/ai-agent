@@ -49,17 +49,14 @@ function ai_agent_load_compat_abilities_api(): void {
 /**
  * Load the AI Client SDK if WordPress core does not provide it.
  *
- * This includes the php-ai-client Composer library (autoloader),
- * the WordPress adapter classes, and the wp_ai_client_prompt() function.
+ * The php-ai-client library is provided by Composer (via Jetpack Autoloader).
+ * This function loads the WordPress adapter classes and wp_ai_client_prompt().
  */
 function ai_agent_load_compat_ai_client(): void {
 
 	if ( function_exists( 'wp_ai_client_prompt' ) ) {
 		return; // Core already provides it.
 	}
-
-	// Composer autoloader for the php-ai-client library.
-	require_once AI_AGENT_COMPAT_DIR . '/php-ai-client/autoload.php';
 
 	// WordPress adapter classes.
 	require_once AI_AGENT_COMPAT_DIR . '/ai-client/adapters/class-wp-ai-client-http-client.php';

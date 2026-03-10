@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="tests/bootstrap.php" backupGlobals="false" colors="true">
+	<php>
+		<const name="WP_TESTS_MULTISITE" value="1"/>
+	</php>
+	<testsuites>
+		<testsuite name="ai-agent">
+			<directory suffix="Test.php">./tests/</directory>
+		</testsuite>
+	</testsuites>
+	<coverage includeUncoveredFiles="true" processUncoveredFiles="true">
+		<include>
+			<directory suffix=".php">./includes</directory>
+		</include>
+		<exclude>
+			<directory>./vendor</directory>
+			<directory>./build</directory>
+			<directory>./node_modules</directory>
+			<directory>./src</directory>
+		</exclude>
+		<report>
+			<html outputDirectory="coverage-html"/>
+			<clover outputFile="coverage.xml"/>
+			<text outputFile="php://stdout" showUncoveredFiles="false"/>
+		</report>
+	</coverage>
+</phpunit>
