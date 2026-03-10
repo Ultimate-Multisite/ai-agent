@@ -5,8 +5,15 @@
  * @package AiAgent
  */
 
+// Load Composer autoloader first - required for PSR interfaces used by compat layer.
+$plugin_dir = dirname( __DIR__ );
+if ( file_exists( $plugin_dir . '/vendor/autoload_packages.php' ) ) {
+	require_once $plugin_dir . '/vendor/autoload_packages.php';
+} else {
+	require_once $plugin_dir . '/vendor/autoload.php';
+}
+
 $_tests_dir = getenv('WP_TESTS_DIR');
-require 'vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
 if ( ! $_tests_dir ) {
 	$_tests_dir = rtrim(sys_get_temp_dir(), '/\\') . '/wordpress-tests-lib';
 }
