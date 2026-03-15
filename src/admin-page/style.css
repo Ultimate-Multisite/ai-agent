@@ -466,7 +466,9 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 .ai-agent-assistant h1 { font-size: 1.3em; }
+
 .ai-agent-assistant h2 { font-size: 1.15em; }
+
 .ai-agent-assistant h3 { font-size: 1.05em; }
 
 .ai-agent-assistant code {
@@ -496,6 +498,35 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 .ai-agent-code-language {
 	color: #a0a0a0;
 	text-transform: lowercase;
+}
+
+.ai-agent-code-header-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.ai-agent-code-toggle {
+	background: none;
+	border: 1px solid #555;
+	color: #888;
+	cursor: pointer;
+	font-size: 11px;
+	padding: 2px 6px;
+	border-radius: 3px;
+	transition: background 0.15s, color 0.15s;
+	line-height: 1;
+}
+
+.ai-agent-code-toggle:hover {
+	background: #555;
+	color: #fff;
+}
+
+.ai-agent-code-toggle.is-active {
+	background: #555;
+	color: #fff;
+	border-color: #888;
 }
 
 .ai-agent-code-copy {
@@ -835,7 +866,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 .ai-agent-context-detail {
-	font-weight: normal;
+	font-weight: 400;
 	margin-left: 4px;
 	color: #a7aaad;
 }
@@ -1282,6 +1313,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 
 /* Responsive */
 @media (max-width: 900px) {
+
 	.ai-agent-sidebar {
 		width: 200px;
 		min-width: 200px;
@@ -1289,6 +1321,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 @media (max-width: 700px) {
+
 	.ai-agent-layout {
 		flex-direction: column;
 		height: auto;
@@ -1382,7 +1415,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 .ai-agent-debug-detail {
-	font-weight: normal;
+	font-weight: 400;
 	color: #a7aaad;
 	margin-left: 4px;
 }
