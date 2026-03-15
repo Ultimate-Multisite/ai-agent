@@ -25,9 +25,7 @@ export default function CodeBlock( { language, children } ) {
 		<div className="ai-agent-code-block">
 			<div className="ai-agent-code-header">
 				{ language && (
-					<span className="ai-agent-code-language">
-						{ language }
-					</span>
+					<span className="ai-agent-code-language">{ language }</span>
 				) }
 				<button
 					className="ai-agent-code-copy"

@@ -466,7 +466,9 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 .ai-agent-assistant h1 { font-size: 1.3em; }
+
 .ai-agent-assistant h2 { font-size: 1.15em; }
+
 .ai-agent-assistant h3 { font-size: 1.05em; }
 
 .ai-agent-assistant code {
@@ -835,7 +837,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 .ai-agent-context-detail {
-	font-weight: normal;
+	font-weight: 400;
 	margin-left: 4px;
 	color: #a7aaad;
 }
@@ -1282,6 +1284,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 
 /* Responsive */
 @media (max-width: 900px) {
+
 	.ai-agent-sidebar {
 		width: 200px;
 		min-width: 200px;
@@ -1289,6 +1292,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 @media (max-width: 700px) {
+
 	.ai-agent-layout {
 		flex-direction: column;
 		height: auto;
@@ -1382,7 +1386,7 @@ body.tools_page_ai-agent #wpbody-content > .updated {
 }
 
 .ai-agent-debug-detail {
-	font-weight: normal;
+	font-weight: 400;
 	color: #a7aaad;
 	margin-left: 4px;
 }

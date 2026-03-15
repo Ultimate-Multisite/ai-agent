@@ -21,9 +21,7 @@ const components = {
 	code( { inline, className, children, ...props } ) {
 		const match = /language-(\w+)/.exec( className || '' );
 		if ( ! inline && match ) {
-			return (
-				<CodeBlock language={ match[ 1 ] }>{ children }</CodeBlock>
-			);
+			return <CodeBlock language={ match[ 1 ] }>{ children }</CodeBlock>;
 		}
 		if ( ! inline && String( children ).includes( '\n' ) ) {
 			return <CodeBlock>{ children }</CodeBlock>;
@@ -55,7 +53,9 @@ const components = {
 	},
 	// Prevent wrapping image in paragraph.
 	img( { src, alt, ...props } ) {
-		return <img src={ src } alt={ alt || '' } loading="lazy" { ...props } />;
+		return (
+			<img src={ src } alt={ alt || '' } loading="lazy" { ...props } />
+		);
 	},
 };
 
