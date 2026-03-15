@@ -101,8 +101,8 @@ class MemoryAbilities {
 	/**
 	 * Handle the memory-save ability call.
 	 *
-	 * @param array $input Input with category and content.
-	 * @return array Result.
+	 * @param array<string, mixed> $input Input with category and content.
+	 * @return array<string, mixed> Result.
 	 */
 	public static function handle_memory_save( array $input ): array {
 		$category = $input['category'] ?? 'general';
@@ -128,7 +128,7 @@ class MemoryAbilities {
 	/**
 	 * Handle the memory-list ability call.
 	 *
-	 * @return array Result.
+	 * @return array<string, mixed> Result.
 	 */
 	public static function handle_memory_list(): array {
 		$memories = Memory::get_all();
@@ -152,8 +152,8 @@ class MemoryAbilities {
 	/**
 	 * Handle the memory-delete ability call.
 	 *
-	 * @param array $input Input with id.
-	 * @return array Result.
+	 * @param array<string, mixed> $input Input with id.
+	 * @return array<string, mixed> Result.
 	 */
 	public static function handle_memory_delete( array $input ): array {
 		$id = $input['id'] ?? 0;

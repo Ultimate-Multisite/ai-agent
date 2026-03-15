@@ -37,7 +37,7 @@ class Settings {
 	/**
 	 * Default settings.
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public static function get_defaults(): array {
 		return [
@@ -113,7 +113,7 @@ class Settings {
 	/**
 	 * Partial-update settings (merge incoming data with existing).
 	 *
-	 * @param array $data Key-value pairs to update.
+	 * @param array<string, mixed> $data Key-value pairs to update.
 	 * @return bool
 	 */
 	public static function update( array $data ): bool {
