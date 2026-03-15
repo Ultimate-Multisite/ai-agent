@@ -34,7 +34,7 @@ class AbilitiesExplorer {
 		);
 
 		if ( $hook ) {
-			add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
+			add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueueAssets' ] );
 		}
 	}
 
@@ -43,7 +43,7 @@ class AbilitiesExplorer {
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
-	public static function enqueue_assets( string $hook_suffix ): void {
+	public static function enqueueAssets( string $hook_suffix ): void {
 		if ( 'tools_page_' . self::SLUG !== $hook_suffix ) {
 			return;
 		}
@@ -63,6 +63,8 @@ class AbilitiesExplorer {
 			$asset['version']
 		);
 
+		wp_style_add_data( 'ai-agent-abilities-explorer', 'rtl', 'replace' );
+
 		wp_enqueue_script(
 			'ai-agent-abilities-explorer',
 			AI_AGENT_URL . 'build/abilities-explorer.js',
@@ -70,6 +72,8 @@ class AbilitiesExplorer {
 			$asset['version'],
 			true
 		);
+
+		wp_set_script_translations( 'ai-agent-abilities-explorer', 'ai-agent' );
 	}
 
 	/**

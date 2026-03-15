@@ -165,7 +165,7 @@ class RestController {
 			'/abilities-explorer',
 			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => [ __CLASS__, 'handle_abilities_explorer' ],
+				'callback'            => [ __CLASS__, 'handleAbilitiesExplorer' ],
 				'permission_callback' => [ __CLASS__, 'check_permission' ],
 			]
 		);
@@ -1750,7 +1750,7 @@ class RestController {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public static function handle_abilities_explorer(): WP_REST_Response {
+	public static function handleAbilitiesExplorer(): WP_REST_Response {
 		if ( ! function_exists( 'wp_get_abilities' ) ) {
 			return new WP_REST_Response( [], 200 );
 		}
