@@ -53,6 +53,7 @@ export default function MessageActions( { message, index } ) {
 					value={ editText }
 					onChange={ ( e ) => setEditText( e.target.value ) }
 					rows={ 3 }
+					// eslint-disable-next-line jsx-a11y/no-autofocus
 					autoFocus
 					onKeyDown={ ( e ) => {
 						if ( e.key === 'Enter' && ! e.shiftKey ) {
@@ -72,10 +73,7 @@ export default function MessageActions( { message, index } ) {
 					>
 						{ __( 'Send', 'ai-agent' ) }
 					</button>
-					<button
-						type="button"
-						onClick={ () => setEditing( false ) }
-					>
+					<button type="button" onClick={ () => setEditing( false ) }>
 						{ __( 'Cancel', 'ai-agent' ) }
 					</button>
 				</div>
@@ -94,7 +92,9 @@ export default function MessageActions( { message, index } ) {
 				onClick={ handleCopy }
 				title={ __( 'Copy', 'ai-agent' ) }
 			>
-				{ copied ? __( 'Copied', 'ai-agent' ) : __( 'Copy', 'ai-agent' ) }
+				{ copied
+					? __( 'Copied', 'ai-agent' )
+					: __( 'Copy', 'ai-agent' ) }
 			</button>
 			{ isUser && (
 				<button

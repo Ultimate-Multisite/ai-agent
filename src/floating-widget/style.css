@@ -32,7 +32,7 @@
 }
 
 .ai-agent-fab svg {
-	fill: currentColor;
+	fill: currentcolor;
 }
 
 /* Floating panel */
@@ -100,7 +100,7 @@
 }
 
 .ai-agent-floating-titlebar-actions .components-button svg {
-	fill: currentColor;
+	fill: currentcolor;
 }
 
 /* Session Tabs */
@@ -165,6 +165,10 @@
 .ai-agent-floating-panel .ai-agent-messages {
 	padding: 12px;
 	gap: 8px;
+	flex: 1;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
 }
 
 .ai-agent-floating-panel .ai-agent-bubble {
@@ -217,14 +221,6 @@
 	display: none;
 }
 
-/* Messages (needed for floating widget) */
-.ai-agent-floating-panel .ai-agent-messages {
-	flex: 1;
-	overflow-y: auto;
-	display: flex;
-	flex-direction: column;
-}
-
 /* Bubbles (needed for floating widget) */
 .ai-agent-floating-panel .ai-agent-user {
 	background: var(--wp-admin-theme-color, #2271b1);
@@ -245,23 +241,28 @@
 .ai-agent-floating-panel .ai-agent-assistant p {
 	margin: 0 0 0.5em;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant p:last-child {
 	margin-bottom: 0;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant ul,
 .ai-agent-floating-panel .ai-agent-assistant ol {
 	margin: 0.3em 0;
 	padding-left: 1.3em;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant li {
 	margin-bottom: 0.15em;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant code {
 	background: #e0e0e0;
 	padding: 1px 4px;
 	border-radius: 3px;
 	font-size: 0.85em;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant pre {
 	background: #1d2327;
 	color: #e0e0e0;
@@ -272,14 +273,17 @@
 	font-size: 0.8em;
 	line-height: 1.4;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant pre code {
 	background: none;
 	padding: 0;
 	color: inherit;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant strong {
 	font-weight: 600;
 }
+
 .ai-agent-floating-panel .ai-agent-assistant hr {
 	border: none;
 	border-top: 1px solid #dcdcde;
@@ -375,6 +379,7 @@
 
 /* Responsive */
 @media (max-width: 500px) {
+
 	.ai-agent-floating-panel {
 		width: calc(100vw - 16px);
 		height: calc(100vh - 80px);
@@ -470,7 +475,7 @@
 }
 
 .ai-agent-debug-detail {
-	font-weight: normal;
+	font-weight: 400;
 	color: #a7aaad;
 	margin-left: 4px;
 }
