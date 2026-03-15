@@ -137,8 +137,8 @@ class ToolDiscovery {
 	/**
 	 * Handle the list-tools ability call.
 	 *
-	 * @param array $input The input parameters.
-	 * @return array The result.
+	 * @param array<string, mixed> $input The input parameters.
+	 * @return array<string, mixed> The result.
 	 */
 	public static function handle_list_tools( array $input ): array {
 		if ( ! function_exists( 'wp_get_abilities' ) ) {
@@ -286,8 +286,8 @@ class ToolDiscovery {
 	/**
 	 * Handle the execute-tool ability call.
 	 *
-	 * @param array $input The input parameters.
-	 * @return array The result.
+	 * @param array<string, mixed> $input The input parameters.
+	 * @return array<string, mixed> The result.
 	 */
 	public static function handle_execute_tool( array $input ): array {
 		$tool_name  = $input['tool_name'] ?? '';
@@ -494,7 +494,7 @@ class ToolDiscovery {
 	 * Format a single ability as a compact summary for the list-tools response.
 	 *
 	 * @param \WP_Ability $ability The ability to format.
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	private static function format_tool_summary( \WP_Ability $ability ): array {
 		$schema = $ability->get_input_schema();
@@ -517,7 +517,7 @@ class ToolDiscovery {
 	/**
 	 * Build a compact parameters hint from an input schema.
 	 *
-	 * @param array $schema The input schema.
+	 * @param array<string, mixed> $schema The input schema.
 	 * @return string A compact string like "command(string, required), working_dir(string)".
 	 */
 	private static function build_parameters_hint( array $schema ): string {
