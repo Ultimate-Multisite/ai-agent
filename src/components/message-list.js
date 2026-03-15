@@ -20,7 +20,7 @@ import DebugPanel from './debug-panel';
  * Suggestions are lines starting with `[suggestion]`.
  *
  * @param {string} text The full response text.
- * @return {{ cleanText: string, suggestions: string[] }}
+ * @return {{ cleanText: string, suggestions: string[] }} Parsed text and suggestion strings.
  */
 function parseSuggestions( text ) {
 	const lines = text.split( '\n' );
@@ -41,10 +41,21 @@ function parseSuggestions( text ) {
 		}
 	}
 
-	const cleanText = lines.slice( 0, lastContentIdx + 1 ).join( '\n' ).trimEnd();
+	const cleanText = lines
+		.slice( 0, lastContentIdx + 1 )
+		.join( '\n' )
+		.trimEnd();
 	return { cleanText, suggestions };
 }
 
+/**
+ * Renders a single message bubble with role-appropriate styling.
+ *
+ * @param {Object} props      - Component props.
+ * @param {string} props.role - Message role: 'user' | 'model' | 'system'.
+ * @param {string} props.text - Message text content.
+ * @return {JSX.Element} Message bubble element.
+ */
 function MessageBubble( { role, text } ) {
 	const classMap = {
 		user: 'ai-agent-bubble ai-agent-user',
@@ -65,6 +76,15 @@ function MessageBubble( { role, text } ) {
 	);
 }
 
+/**
+ * Renders clickable suggestion chips below the last model message.
+ *
+ * @param {Object}   props             - Component props.
+ * @param {string[]} props.suggestions - Suggestion strings to display.
+ * @param {Function} props.onSelect    - Callback when a suggestion is clicked.
+ *                                     Receives the suggestion string.
+ * @return {JSX.Element|null} Suggestion chips, or null if none.
+ */
 function SuggestionChips( { suggestions, onSelect } ) {
 	if ( ! suggestions?.length ) {
 		return null;
@@ -86,6 +106,12 @@ function SuggestionChips( { suggestions, onSelect } ) {
 	);
 }
 
+/**
+ * Extract concatenated text from a message's parts array.
+ *
+ * @param {import('../store').Message} message - Message object.
+ * @return {string} Concatenated text content.
+ */
 function extractText( message ) {
 	if ( ! message.parts?.length ) {
 		return '';
@@ -96,6 +122,12 @@ function extractText( message ) {
 		.join( '' );
 }
 
+/**
+ * Renders the scrollable list of messages for the current session.
+ * Handles auto-scroll, suggestion chips, tool call details, and debug panels.
+ *
+ * @return {JSX.Element} Message list element.
+ */
 export default function MessageList() {
 	const { messages, sending, debugMode } = useSelect( ( select ) => {
 		const store = select( STORE_NAME );
@@ -141,7 +173,10 @@ export default function MessageList() {
 		<div className="ai-agent-messages" ref={ messagesRef }>
 			{ visibleMessages.length === 0 && ! sending && (
 				<div className="ai-agent-empty-state">
-					{ __( 'Send a message to start a conversation.', 'ai-agent' ) }
+					{ __(
+						'Send a message to start a conversation.',
+						'ai-agent'
+					) }
 				</div>
 			) }
 			{ visibleMessages.map( ( msg, i ) => {
@@ -156,9 +191,7 @@ export default function MessageList() {
 					: { cleanText: rawText, suggestions: [] };
 
 				const isLastModel =
-					isModel &&
-					! sending &&
-					i === visibleMessages.length - 1;
+					isModel && ! sending && i === visibleMessages.length - 1;
 
 				return (
 					<div key={ i } className="ai-agent-message-row">
@@ -166,10 +199,7 @@ export default function MessageList() {
 							<ToolCallDetails toolCalls={ msg.toolCalls } />
 						) }
 						<MessageBubble role={ msg.role } text={ cleanText } />
-						<MessageActions
-							message={ msg }
-							index={ i }
-						/>
+						<MessageActions message={ msg } index={ i } />
 						{ debugMode && isModel && msg.debug && (
 							<DebugPanel debug={ msg.debug } />
 						) }
@@ -185,7 +215,7 @@ export default function MessageList() {
 			{ sending && (
 				<div className="ai-agent-bubble ai-agent-assistant ai-agent-thinking">
 					<Spinner />
-					{ __( 'Thinking...', 'ai-agent' ) }
+					{ __( 'Thinking…', 'ai-agent' ) }
 				</div>
 			) }
 		</div>

@@ -4,6 +4,16 @@
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
+/**
+ * Modal dialog asking the user to confirm or deny pending tool calls.
+ * Closes on Escape key. Returns null when there is no pending confirmation.
+ *
+ * @param {Object}                                 props              - Component props.
+ * @param {import('../store').PendingConfirmation} props.confirmation - Pending confirmation data.
+ * @param {Function}                               props.onConfirm    - Called with (alwaysAllow: boolean).
+ * @param {Function}                               props.onReject     - Called when the user denies.
+ * @return {JSX.Element|null} Confirmation dialog, or null if no confirmation pending.
+ */
 export default function ToolConfirmationDialog( {
 	confirmation,
 	onConfirm,
@@ -30,12 +40,7 @@ export default function ToolConfirmationDialog( {
 		<div className="ai-agent-shortcuts-overlay">
 			<div className="ai-agent-tool-confirm-dialog" ref={ dialogRef }>
 				<div className="ai-agent-tool-confirm-header">
-					<h3>
-						{ __(
-							'Tool Confirmation Required',
-							'ai-agent'
-						) }
-					</h3>
+					<h3>{ __( 'Tool Confirmation Required', 'ai-agent' ) }</h3>
 				</div>
 				<div className="ai-agent-tool-confirm-body">
 					<p className="ai-agent-tool-confirm-desc">

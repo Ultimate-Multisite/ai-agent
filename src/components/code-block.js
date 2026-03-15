@@ -10,6 +10,15 @@ import { __ } from '@wordpress/i18n';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+/**
+ * Syntax-highlighted code block with a copy-to-clipboard button.
+ * Used as a custom renderer inside MarkdownMessage.
+ *
+ * @param {Object} props            - Component props.
+ * @param {string} [props.language] - Language identifier for syntax highlighting.
+ * @param {*}      props.children   - Code content.
+ * @return {JSX.Element} Code block element.
+ */
 export default function CodeBlock( { language, children } ) {
 	const [ copied, setCopied ] = useState( false );
 	const code = String( children ).replace( /\n$/, '' );
@@ -25,9 +34,7 @@ export default function CodeBlock( { language, children } ) {
 		<div className="ai-agent-code-block">
 			<div className="ai-agent-code-header">
 				{ language && (
-					<span className="ai-agent-code-language">
-						{ language }
-					</span>
+					<span className="ai-agent-code-language">{ language }</span>
 				) }
 				<button
 					className="ai-agent-code-copy"

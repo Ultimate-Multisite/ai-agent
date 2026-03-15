@@ -14,10 +14,16 @@ import apiFetch from '@wordpress/api-fetch';
 import STORE_NAME from '../store';
 import SlashCommandMenu from './slash-command-menu';
 
-export default function MessageInput( {
-	compact = false,
-	onSlashCommand,
-} ) {
+/**
+ * Message input area with auto-resize, slash command menu, and send/stop controls.
+ *
+ * @param {Object}   props                  - Component props.
+ * @param {boolean}  [props.compact=false]  - Whether to render in compact mode.
+ * @param {Function} [props.onSlashCommand] - Callback for slash command actions.
+ *                                          Receives (action: string, data?: string).
+ * @return {JSX.Element} Message input element.
+ */
+export default function MessageInput( { compact = false, onSlashCommand } ) {
 	const [ text, setText ] = useState( '' );
 	const [ showSlash, setShowSlash ] = useState( false );
 	const textareaRef = useRef( null );
@@ -76,15 +82,23 @@ export default function MessageInput( {
 					path: '/ai-agent/v1/memory',
 					method: 'POST',
 					data: { category: 'general', content: fact },
-				} ).then( () => {
-					if ( onSlashCommand ) {
-						onSlashCommand( 'notice', __( 'Memory saved.', 'ai-agent' ) );
-					}
-				} ).catch( () => {
-					if ( onSlashCommand ) {
-						onSlashCommand( 'notice', __( 'Failed to save memory.', 'ai-agent' ) );
-					}
-				} );
+				} )
+					.then( () => {
+						if ( onSlashCommand ) {
+							onSlashCommand(
+								'notice',
+								__( 'Memory saved.', 'ai-agent' )
+							);
+						}
+					} )
+					.catch( () => {
+						if ( onSlashCommand ) {
+							onSlashCommand(
+								'notice',
+								__( 'Failed to save memory.', 'ai-agent' )
+							);
+						}
+					} );
 			}
 			setText( '' );
 			return;
@@ -98,20 +112,33 @@ export default function MessageInput( {
 					path: '/ai-agent/v1/memory/forget',
 					method: 'POST',
 					data: { topic },
-				} ).then( ( result ) => {
-					if ( onSlashCommand ) {
-						const count = result?.deleted || 0;
-						onSlashCommand( 'notice',
-							count > 0
-								? `${ count } ${ count === 1 ? __( 'memory', 'ai-agent' ) : __( 'memories', 'ai-agent' ) } ${ __( 'deleted.', 'ai-agent' ) }`
-								: __( 'No matching memories found.', 'ai-agent' )
-						);
-					}
-				} ).catch( () => {
-					if ( onSlashCommand ) {
-						onSlashCommand( 'notice', __( 'Failed to forget memories.', 'ai-agent' ) );
-					}
-				} );
+				} )
+					.then( ( result ) => {
+						if ( onSlashCommand ) {
+							const count = result?.deleted || 0;
+							onSlashCommand(
+								'notice',
+								count > 0
+									? `${ count } ${
+											count === 1
+												? __( 'memory', 'ai-agent' )
+												: __( 'memories', 'ai-agent' )
+									  } ${ __( 'deleted.', 'ai-agent' ) }`
+									: __(
+											'No matching memories found.',
+											'ai-agent'
+									  )
+							);
+						}
+					} )
+					.catch( () => {
+						if ( onSlashCommand ) {
+							onSlashCommand(
+								'notice',
+								__( 'Failed to forget memories.', 'ai-agent' )
+							);
+						}
+					} );
 			}
 			setText( '' );
 			return;
@@ -220,9 +247,7 @@ export default function MessageInput( {
 
 	return (
 		<div
-			className={ `ai-agent-input-area ${
-				compact ? 'is-compact' : ''
-			}` }
+			className={ `ai-agent-input-area ${ compact ? 'is-compact' : '' }` }
 		>
 			{ showSlash && (
 				<SlashCommandMenu
@@ -236,7 +261,7 @@ export default function MessageInput( {
 				className="ai-agent-input"
 				rows={ 1 }
 				placeholder={ __(
-					'Type a message or / for commands...',
+					'Type a message or / for commands…',
 					'ai-agent'
 				) }
 				value={ text }

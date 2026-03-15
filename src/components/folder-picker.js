@@ -10,6 +10,15 @@ import { __ } from '@wordpress/i18n';
  */
 import STORE_NAME from '../store';
 
+/**
+ * Folder picker for moving a session to an existing or new folder.
+ *
+ * @param {Object}   props               - Component props.
+ * @param {string}   props.currentFolder - The session's current folder name.
+ * @param {Function} props.onSelect      - Called with the selected folder name (empty = remove).
+ * @param {Function} props.onClose       - Called when the picker should close.
+ * @return {JSX.Element} Folder picker element.
+ */
 export default function FolderPicker( { currentFolder, onSelect, onClose } ) {
 	const [ newFolder, setNewFolder ] = useState( '' );
 	const { fetchFolders } = useDispatch( STORE_NAME );
@@ -57,7 +66,7 @@ export default function FolderPicker( { currentFolder, onSelect, onClose } ) {
 			<div className="ai-agent-folder-picker-new">
 				<input
 					type="text"
-					placeholder={ __( 'New folder...', 'ai-agent' ) }
+					placeholder={ __( 'New folder…', 'ai-agent' ) }
 					value={ newFolder }
 					onChange={ ( e ) => setNewFolder( e.target.value ) }
 					onKeyDown={ ( e ) => {

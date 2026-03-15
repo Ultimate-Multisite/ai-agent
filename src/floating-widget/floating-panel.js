@@ -14,6 +14,12 @@ import ChatPanel from '../components/chat-panel';
 import SessionTabs from './session-tabs';
 import useDrag from './use-drag';
 
+/**
+ * Floating chat panel with draggable titlebar, minimize/close controls,
+ * session tabs, and the compact chat panel.
+ *
+ * @return {JSX.Element} Floating panel element.
+ */
 export default function FloatingPanel() {
 	const { setFloatingOpen, setFloatingMinimized, clearCurrentSession } =
 		useDispatch( STORE_NAME );
@@ -26,8 +32,7 @@ export default function FloatingPanel() {
 		[]
 	);
 
-	const { position, isDragging, handleMouseDown, resetPosition } =
-		useDrag();
+	const { position, isDragging, handleMouseDown, resetPosition } = useDrag();
 
 	// Build inline styles for custom position.
 	const panelStyle = {};
@@ -80,9 +85,7 @@ export default function FloatingPanel() {
 								? __( 'Expand', 'ai-agent' )
 								: __( 'Minimize', 'ai-agent' )
 						}
-						onClick={ () =>
-							setFloatingMinimized( ! isMinimized )
-						}
+						onClick={ () => setFloatingMinimized( ! isMinimized ) }
 					/>
 					<Button
 						icon={ close }

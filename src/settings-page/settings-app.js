@@ -30,6 +30,13 @@ import ToolProfilesManager from './tool-profiles-manager';
 import AutomationsManager from './automations-manager';
 import EventsManager from './events-manager';
 
+/**
+ * Root settings page component. Renders a tab panel with sections for
+ * general settings, system prompt, memory, skills, knowledge, custom tools,
+ * tool profiles, automations, events, abilities, usage, and advanced options.
+ *
+ * @return {JSX.Element} Settings app element.
+ */
 export default function SettingsApp() {
 	const { fetchSettings, fetchProviders, saveSettings } =
 		useDispatch( STORE_NAME );
@@ -62,21 +69,24 @@ export default function SettingsApp() {
 		}
 	}, [ settings, local ] );
 
-	const updateField = useCallback(
-		( key, value ) => {
-			setLocal( ( prev ) => ( { ...prev, [ key ]: value } ) );
-		},
-		[]
-	);
+	const updateField = useCallback( ( key, value ) => {
+		setLocal( ( prev ) => ( { ...prev, [ key ]: value } ) );
+	}, [] );
 
 	const handleSave = useCallback( async () => {
 		setSaving( true );
 		setNotice( null );
 		try {
 			await saveSettings( local );
-			setNotice( { status: 'success', message: __( 'Settings saved.', 'ai-agent' ) } );
+			setNotice( {
+				status: 'success',
+				message: __( 'Settings saved.', 'ai-agent' ),
+			} );
 		} catch {
-			setNotice( { status: 'error', message: __( 'Failed to save settings.', 'ai-agent' ) } );
+			setNotice( {
+				status: 'error',
+				message: __( 'Failed to save settings.', 'ai-agent' ),
+			} );
 		}
 		setSaving( false );
 	}, [ local, saveSettings ] );
@@ -194,10 +204,7 @@ export default function SettingsApp() {
 										value={ local.default_provider }
 										options={ providerOptions }
 										onChange={ ( v ) =>
-											updateField(
-												'default_provider',
-												v
-											)
+											updateField( 'default_provider', v )
 										}
 										__nextHasNoMarginBottom
 									/>
@@ -241,10 +248,7 @@ export default function SettingsApp() {
 										) }
 										value={ local.greeting_message }
 										onChange={ ( v ) =>
-											updateField(
-												'greeting_message',
-												v
-											)
+											updateField( 'greeting_message', v )
 										}
 										placeholder={
 											settings?._defaults
@@ -339,9 +343,7 @@ export default function SettingsApp() {
 											'Auto-Index on Post Save',
 											'ai-agent'
 										) }
-										checked={
-											local.knowledge_auto_index
-										}
+										checked={ local.knowledge_auto_index }
 										onChange={ ( v ) =>
 											updateField(
 												'knowledge_auto_index',
@@ -520,9 +522,7 @@ export default function SettingsApp() {
 										type="number"
 										min={ 4096 }
 										max={ 2000000 }
-										value={
-											local.context_window_default
-										}
+										value={ local.context_window_default }
 										onChange={ ( v ) =>
 											updateField(
 												'context_window_default',
@@ -541,8 +541,7 @@ export default function SettingsApp() {
 											'ai-agent'
 										) }
 										value={
-											local.tool_discovery_mode ||
-											'auto'
+											local.tool_discovery_mode || 'auto'
 										}
 										options={ [
 											{

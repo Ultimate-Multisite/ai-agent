@@ -21,9 +21,7 @@ const components = {
 	code( { inline, className, children, ...props } ) {
 		const match = /language-(\w+)/.exec( className || '' );
 		if ( ! inline && match ) {
-			return (
-				<CodeBlock language={ match[ 1 ] }>{ children }</CodeBlock>
-			);
+			return <CodeBlock language={ match[ 1 ] }>{ children }</CodeBlock>;
 		}
 		if ( ! inline && String( children ).includes( '\n' ) ) {
 			return <CodeBlock>{ children }</CodeBlock>;
@@ -55,12 +53,22 @@ const components = {
 	},
 	// Prevent wrapping image in paragraph.
 	img( { src, alt, ...props } ) {
-		return <img src={ src } alt={ alt || '' } loading="lazy" { ...props } />;
+		return (
+			<img src={ src } alt={ alt || '' } loading="lazy" { ...props } />
+		);
 	},
 };
 
 const remarkPlugins = [ remarkGfm ];
 
+/**
+ * Renders markdown content using ReactMarkdown with GFM support.
+ * Uses custom renderers for code blocks, links, tables, and images.
+ *
+ * @param {Object} props         - Component props.
+ * @param {string} props.content - Markdown string to render.
+ * @return {JSX.Element} Rendered markdown element.
+ */
 export default function MarkdownMessage( { content } ) {
 	const memoizedContent = useMemo( () => content, [ content ] );
 

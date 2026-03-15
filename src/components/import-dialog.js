@@ -10,6 +10,15 @@ import { __ } from '@wordpress/i18n';
  */
 import STORE_NAME from '../store';
 
+/**
+ * Modal dialog for importing a session from a JSON file.
+ * Supports drag-and-drop and click-to-browse. Validates the ai-agent-v1 format.
+ * Closes on Escape key.
+ *
+ * @param {Object}   props         - Component props.
+ * @param {Function} props.onClose - Callback to close the dialog.
+ * @return {JSX.Element} Import dialog element.
+ */
 export default function ImportDialog( { onClose } ) {
 	const [ fileData, setFileData ] = useState( null );
 	const [ fileName, setFileName ] = useState( '' );
@@ -28,6 +37,12 @@ export default function ImportDialog( { onClose } ) {
 		return () => document.removeEventListener( 'keydown', handler );
 	}, [ onClose ] );
 
+	/**
+	 * Read and validate a File object as an ai-agent-v1 JSON export.
+	 *
+	 * @param {File} file - The file to read.
+	 * @return {void}
+	 */
 	const handleFile = useCallback( ( file ) => {
 		setError( '' );
 		setFileName( file.name );
@@ -75,9 +90,7 @@ export default function ImportDialog( { onClose } ) {
 		<div className="ai-agent-shortcuts-overlay">
 			<div className="ai-agent-export-dialog" ref={ dialogRef }>
 				<div className="ai-agent-export-header">
-					<h3>
-						{ __( 'Import Conversation', 'ai-agent' ) }
-					</h3>
+					<h3>{ __( 'Import Conversation', 'ai-agent' ) }</h3>
 					<button type="button" onClick={ onClose }>
 						&times;
 					</button>
@@ -89,8 +102,7 @@ export default function ImportDialog( { onClose } ) {
 						onDragOver={ ( e ) => e.preventDefault() }
 						onDrop={ handleDrop }
 						onClick={ () => {
-							const input =
-								document.createElement( 'input' );
+							const input = document.createElement( 'input' );
 							input.type = 'file';
 							input.accept = '.json';
 							input.onchange = ( e ) => {
@@ -108,12 +120,12 @@ export default function ImportDialog( { onClose } ) {
 								{ fileData && (
 									<p>
 										{ fileData.title ||
-											__( 'Untitled', 'ai-agent' ) }{ ' ' }
-										({ ( fileData.messages?.length || 0 ) }{ ' ' }
-										{ __(
-											'messages',
-											'ai-agent'
-										) })
+											__(
+												'Untitled',
+												'ai-agent'
+											) }{ ' ' }
+										({ fileData.messages?.length || 0 }{ ' ' }
+										{ __( 'messages', 'ai-agent' ) })
 									</p>
 								) }
 							</div>

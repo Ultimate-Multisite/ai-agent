@@ -4,6 +4,12 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
+/**
+ * Format a duration in milliseconds as a human-readable string.
+ *
+ * @param {number} ms - Duration in milliseconds.
+ * @return {string} Formatted string (e.g. '1.2s', '850ms').
+ */
 function formatTime( ms ) {
 	if ( ms < 1000 ) {
 		return ms + 'ms';
@@ -11,6 +17,12 @@ function formatTime( ms ) {
 	return ( ms / 1000 ).toFixed( 1 ) + 's';
 }
 
+/**
+ * Format a cost in USD as a human-readable string.
+ *
+ * @param {number} cost - Cost in USD.
+ * @return {string} Formatted string (e.g. '$0.0012', '$1.23').
+ */
 function formatCost( cost ) {
 	if ( ! cost || cost === 0 ) {
 		return '$0';
@@ -21,6 +33,14 @@ function formatCost( cost ) {
 	return '$' + cost.toFixed( 2 );
 }
 
+/**
+ * Collapsible debug panel showing per-response performance metrics.
+ * Only rendered when debug mode is active. Returns null when no debug data.
+ *
+ * @param {Object}                       props       - Component props.
+ * @param {import('../store').DebugInfo} props.debug - Debug metadata from the store.
+ * @return {JSX.Element|null} Debug panel element, or null if no debug data.
+ */
 export default function DebugPanel( { debug } ) {
 	const [ expanded, setExpanded ] = useState( false );
 
@@ -39,7 +59,8 @@ export default function DebugPanel( { debug } ) {
 		toolNames = [],
 	} = debug;
 
-	const totalTokens = ( tokenUsage.prompt || 0 ) + ( tokenUsage.completion || 0 );
+	const totalTokens =
+		( tokenUsage.prompt || 0 ) + ( tokenUsage.completion || 0 );
 
 	const summaryParts = [];
 	if ( responseTimeMs > 0 ) {
@@ -51,7 +72,8 @@ export default function DebugPanel( { debug } ) {
 	if ( costEstimate > 0 ) {
 		summaryParts.push( formatCost( costEstimate ) );
 	}
-	const summary = summaryParts.join( ' / ' ) || __( 'No metrics', 'ai-agent' );
+	const summary =
+		summaryParts.join( ' / ' ) || __( 'No metrics', 'ai-agent' );
 
 	return (
 		<div className="ai-agent-debug-panel">
@@ -60,9 +82,7 @@ export default function DebugPanel( { debug } ) {
 				onClick={ () => setExpanded( ! expanded ) }
 				type="button"
 			>
-				<span className="ai-agent-debug-summary">
-					{ summary }
-				</span>
+				<span className="ai-agent-debug-summary">{ summary }</span>
 				<span className="ai-agent-debug-caret">
 					{ expanded ? '\u25B4' : '\u25BE' }
 				</span>
@@ -94,7 +114,12 @@ export default function DebugPanel( { debug } ) {
 						<span className="ai-agent-debug-value">
 							{ totalTokens.toLocaleString() }
 							<span className="ai-agent-debug-detail">
-								({ ( tokenUsage.prompt || 0 ).toLocaleString() } in / { ( tokenUsage.completion || 0 ).toLocaleString() } out)
+								({ ( tokenUsage.prompt || 0 ).toLocaleString() }{ ' ' }
+								in /{ ' ' }
+								{ (
+									tokenUsage.completion || 0
+								).toLocaleString() }{ ' ' }
+								out)
 							</span>
 						</span>
 					</div>

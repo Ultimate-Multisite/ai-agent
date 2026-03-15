@@ -6,10 +6,25 @@ import { useState, useRef, useCallback, useEffect } from '@wordpress/element';
 const STORAGE_KEY = 'aiAgentWidgetPosition';
 
 /**
+ * @typedef {Object} DragPosition
+ * @property {number} x - Left offset in pixels.
+ * @property {number} y - Top offset in pixels.
+ */
+
+/**
+ * @typedef {Object} UseDragReturn
+ * @property {DragPosition|null} position        - Current panel position, or null for CSS default.
+ * @property {boolean}           isDragging      - Whether the panel is currently being dragged.
+ * @property {Function}          handleMouseDown - mousedown handler to attach to the drag handle.
+ * @property {Function}          resetPosition   - Resets position to CSS default and clears localStorage.
+ */
+
+/**
  * Custom hook for making the floating panel draggable.
+ * Persists position to localStorage under 'aiAgentWidgetPosition'.
+ * Clamps position to the viewport on drag.
  *
- * Returns position, isDragging, handleMouseDown, and resetPosition.
- * Position is null when using CSS default (bottom-right).
+ * @return {UseDragReturn} Drag state and handlers.
  */
 export default function useDrag() {
 	const [ position, setPosition ] = useState( () => {
@@ -25,6 +40,13 @@ export default function useDrag() {
 	const dragOffset = useRef( { x: 0, y: 0 } );
 	const panelRef = useRef( null );
 
+	/**
+	 * Clamp a position to keep the panel fully within the viewport.
+	 *
+	 * @param {number} x - Desired left offset.
+	 * @param {number} y - Desired top offset.
+	 * @return {DragPosition} Clamped position.
+	 */
 	const clampToViewport = useCallback( ( x, y ) => {
 		const vw = window.innerWidth;
 		const vh = window.innerHeight;
@@ -37,31 +59,28 @@ export default function useDrag() {
 		};
 	}, [] );
 
-	const handleMouseDown = useCallback(
-		( e ) => {
-			// Only left button.
-			if ( e.button !== 0 ) {
-				return;
-			}
+	const handleMouseDown = useCallback( ( e ) => {
+		// Only left button.
+		if ( e.button !== 0 ) {
+			return;
+		}
 
-			const panel = e.target.closest( '.ai-agent-floating-panel' );
-			if ( ! panel ) {
-				return;
-			}
+		const panel = e.target.closest( '.ai-agent-floating-panel' );
+		if ( ! panel ) {
+			return;
+		}
 
-			panelRef.current = panel;
-			const rect = panel.getBoundingClientRect();
-			dragOffset.current = {
-				x: e.clientX - rect.left,
-				y: e.clientY - rect.top,
-			};
+		panelRef.current = panel;
+		const rect = panel.getBoundingClientRect();
+		dragOffset.current = {
+			x: e.clientX - rect.left,
+			y: e.clientY - rect.top,
+		};
 
-			setIsDragging( true );
-			document.body.style.userSelect = 'none';
-			e.preventDefault();
-		},
-		[]
-	);
+		setIsDragging( true );
+		document.body.style.userSelect = 'none';
+		e.preventDefault();
+	}, [] );
 
 	useEffect( () => {
 		if ( ! isDragging ) {

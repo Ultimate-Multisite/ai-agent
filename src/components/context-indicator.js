@@ -10,6 +10,12 @@ import { __ } from '@wordpress/i18n';
  */
 import STORE_NAME from '../store';
 
+/**
+ * Format a token count as a human-readable string (e.g. '128K', '1.2M').
+ *
+ * @param {number} n - Token count.
+ * @return {string} Formatted string.
+ */
 function formatTokens( n ) {
 	if ( n >= 1_000_000 ) {
 		return ( n / 1_000_000 ).toFixed( 1 ) + 'M';
@@ -20,6 +26,13 @@ function formatTokens( n ) {
 	return n.toString();
 }
 
+/**
+ * Context window usage indicator showing token counts and a progress bar.
+ * Displays compact/expand actions when usage exceeds 80%.
+ * Returns null when no tokens have been used yet.
+ *
+ * @return {JSX.Element|null} Context indicator element, or null if no usage.
+ */
 export default function ContextIndicator() {
 	const { percentage, isWarning, tokenUsage } = useSelect(
 		( select ) => ( {
@@ -76,10 +89,7 @@ export default function ContextIndicator() {
 			{ isWarning && (
 				<div className="ai-agent-context-warning">
 					<span>
-						{ __(
-							'Context window is getting full.',
-							'ai-agent'
-						) }
+						{ __( 'Context window is getting full.', 'ai-agent' ) }
 					</span>
 					<div className="ai-agent-context-warning-actions">
 						<Button

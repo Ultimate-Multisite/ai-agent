@@ -3,11 +3,7 @@
  */
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
-import {
-	Button,
-	ToggleControl,
-	Spinner,
-} from '@wordpress/components';
+import { Button, ToggleControl, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -17,6 +13,14 @@ import apiFetch from '@wordpress/api-fetch';
 import STORE_NAME from '../store';
 import ProviderSelector from './provider-selector';
 
+/**
+ * Multi-step onboarding wizard shown on first use.
+ * Steps: Welcome → Provider selection → Abilities configuration → Done.
+ *
+ * @param {Object}   props            - Component props.
+ * @param {Function} props.onComplete - Callback invoked when the wizard is finished or skipped.
+ * @return {JSX.Element} Onboarding wizard element.
+ */
 export default function OnboardingWizard( { onComplete } ) {
 	const [ step, setStep ] = useState( 0 );
 	const [ abilities, setAbilities ] = useState( [] );

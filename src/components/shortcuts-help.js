@@ -9,6 +9,14 @@ import { useEffect, useRef } from '@wordpress/element';
  */
 import { SHORTCUTS } from '../utils/keyboard-shortcuts';
 
+/**
+ * Modal dialog listing all keyboard shortcuts and slash commands.
+ * Closes on Escape key or click outside.
+ *
+ * @param {Object}   props         - Component props.
+ * @param {Function} props.onClose - Callback to close the dialog.
+ * @return {JSX.Element} Shortcuts help dialog element.
+ */
 export default function ShortcutsHelp( { onClose } ) {
 	const dialogRef = useRef( null );
 
@@ -52,10 +60,7 @@ export default function ShortcutsHelp( { onClose } ) {
 				</div>
 				<div className="ai-agent-shortcuts-list">
 					{ SHORTCUTS.map( ( s ) => (
-						<div
-							key={ s.combo }
-							className="ai-agent-shortcut-row"
-						>
+						<div key={ s.combo } className="ai-agent-shortcut-row">
 							<span className="ai-agent-shortcut-label">
 								{ s.label }
 							</span>
@@ -75,21 +80,15 @@ export default function ShortcutsHelp( { onClose } ) {
 					</div>
 					<div className="ai-agent-shortcut-row">
 						<span>/model</span>
-						<span>
-							{ __( 'Switch model', 'ai-agent' ) }
-						</span>
+						<span>{ __( 'Switch model', 'ai-agent' ) }</span>
 					</div>
 					<div className="ai-agent-shortcut-row">
 						<span>/clear</span>
-						<span>
-							{ __( 'Clear conversation', 'ai-agent' ) }
-						</span>
+						<span>{ __( 'Clear conversation', 'ai-agent' ) }</span>
 					</div>
 					<div className="ai-agent-shortcut-row">
 						<span>/export</span>
-						<span>
-							{ __( 'Export conversation', 'ai-agent' ) }
-						</span>
+						<span>{ __( 'Export conversation', 'ai-agent' ) }</span>
 					</div>
 					<div className="ai-agent-shortcut-row">
 						<span>/compact</span>
@@ -99,9 +98,7 @@ export default function ShortcutsHelp( { onClose } ) {
 					</div>
 					<div className="ai-agent-shortcut-row">
 						<span>/help</span>
-						<span>
-							{ __( 'Show shortcuts', 'ai-agent' ) }
-						</span>
+						<span>{ __( 'Show shortcuts', 'ai-agent' ) }</span>
 					</div>
 				</div>
 			</div>

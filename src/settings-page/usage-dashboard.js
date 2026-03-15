@@ -6,6 +6,12 @@ import { Spinner, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
+/**
+ * Format a cost value in USD as a human-readable string.
+ *
+ * @param {number|string} cost - Cost value.
+ * @return {string} Formatted cost string (e.g. '$0.0012', '$1.23').
+ */
 function formatCost( cost ) {
 	const num = parseFloat( cost ) || 0;
 	if ( num < 0.01 ) {
@@ -14,6 +20,12 @@ function formatCost( cost ) {
 	return '$' + num.toFixed( 2 );
 }
 
+/**
+ * Format a token count as a human-readable string.
+ *
+ * @param {number|string} tokens - Token count.
+ * @return {string} Formatted string (e.g. '128K', '1.2M').
+ */
 function formatTokens( tokens ) {
 	const num = parseInt( tokens, 10 ) || 0;
 	if ( num >= 1_000_000 ) {
@@ -25,6 +37,11 @@ function formatTokens( tokens ) {
 	return num.toString();
 }
 
+/**
+ * Usage dashboard showing token consumption and cost statistics over a time period.
+ *
+ * @return {JSX.Element} Usage dashboard element.
+ */
 export default function UsageDashboard() {
 	const [ period, setPeriod ] = useState( '30d' );
 	const [ data, setData ] = useState( null );
@@ -56,9 +73,7 @@ export default function UsageDashboard() {
 	}
 
 	if ( ! data ) {
-		return (
-			<p>{ __( 'Failed to load usage data.', 'ai-agent' ) }</p>
-		);
+		return <p>{ __( 'Failed to load usage data.', 'ai-agent' ) }</p>;
 	}
 
 	const totals = data.totals || {};
@@ -141,24 +156,17 @@ export default function UsageDashboard() {
 							<tr>
 								<th>{ __( 'Model', 'ai-agent' ) }</th>
 								<th>{ __( 'Requests', 'ai-agent' ) }</th>
-								<th>
-									{ __( 'Input Tokens', 'ai-agent' ) }
-								</th>
-								<th>
-									{ __( 'Output Tokens', 'ai-agent' ) }
-								</th>
+								<th>{ __( 'Input Tokens', 'ai-agent' ) }</th>
+								<th>{ __( 'Output Tokens', 'ai-agent' ) }</th>
 								<th>{ __( 'Cost', 'ai-agent' ) }</th>
 								<th></th>
 							</tr>
 						</thead>
 						<tbody>
 							{ byModel.map( ( m, i ) => {
-								const cost =
-									parseFloat( m.cost_usd ) || 0;
+								const cost = parseFloat( m.cost_usd ) || 0;
 								const pct =
-									maxCost > 0
-										? ( cost / maxCost ) * 100
-										: 0;
+									maxCost > 0 ? ( cost / maxCost ) * 100 : 0;
 								return (
 									<tr key={ i }>
 										<td>
@@ -168,18 +176,14 @@ export default function UsageDashboard() {
 										</td>
 										<td>{ m.request_count }</td>
 										<td>
-											{ formatTokens(
-												m.prompt_tokens
-											) }
+											{ formatTokens( m.prompt_tokens ) }
 										</td>
 										<td>
 											{ formatTokens(
 												m.completion_tokens
 											) }
 										</td>
-										<td>
-											{ formatCost( m.cost_usd ) }
-										</td>
+										<td>{ formatCost( m.cost_usd ) }</td>
 										<td>
 											<div className="ai-agent-usage-bar">
 												<div

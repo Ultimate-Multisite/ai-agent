@@ -10,6 +10,15 @@ import { __ } from '@wordpress/i18n';
  */
 import STORE_NAME from '../store';
 
+/**
+ * Provider and model selector dropdowns.
+ * Changing the provider auto-selects its first model.
+ *
+ * @param {Object}  props                 - Component props.
+ * @param {boolean} [props.compact=false] - Whether to render in compact mode
+ *                                        (hides labels, uses compact size).
+ * @return {JSX.Element} Provider selector element.
+ */
 export default function ProviderSelector( { compact = false } ) {
 	const { providers, selectedProviderId, selectedModelId, models } =
 		useSelect( ( select ) => {
@@ -22,8 +31,7 @@ export default function ProviderSelector( { compact = false } ) {
 			};
 		}, [] );
 
-	const { setSelectedProvider, setSelectedModel } =
-		useDispatch( STORE_NAME );
+	const { setSelectedProvider, setSelectedModel } = useDispatch( STORE_NAME );
 
 	const providerOptions = providers.map( ( p ) => ( {
 		label: p.name,
@@ -41,7 +49,7 @@ export default function ProviderSelector( { compact = false } ) {
 		? models.map( ( m ) => ( {
 				label: m.name || m.id,
 				value: m.id,
-			} ) )
+		  } ) )
 		: [ { label: __( '(default)', 'ai-agent' ), value: '' } ];
 
 	const onProviderChange = ( value ) => {

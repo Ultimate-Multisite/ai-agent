@@ -16,9 +16,19 @@ import ShortcutsHelp from '../components/shortcuts-help';
 import { useKeyboardShortcuts } from '../utils/keyboard-shortcuts';
 import './style.css';
 
+/**
+ * Root admin page application component. Renders the session sidebar and chat panel,
+ * handles onboarding wizard display, keyboard shortcuts, and slash command routing.
+ *
+ * @return {JSX.Element|null} Admin page app element, or null while settings are loading.
+ */
 function AdminPageApp() {
-	const { fetchProviders, fetchSessions, fetchSettings, clearCurrentSession } =
-		useDispatch( STORE_NAME );
+	const {
+		fetchProviders,
+		fetchSessions,
+		fetchSettings,
+		clearCurrentSession,
+	} = useDispatch( STORE_NAME );
 	const { settings, settingsLoaded } = useSelect(
 		( select ) => ( {
 			settings: select( STORE_NAME ).getSettings(),
@@ -73,9 +83,7 @@ function AdminPageApp() {
 
 	if ( showOnboarding ) {
 		return (
-			<OnboardingWizard
-				onComplete={ () => setShowOnboarding( false ) }
-			/>
+			<OnboardingWizard onComplete={ () => setShowOnboarding( false ) } />
 		);
 	}
 
@@ -88,9 +96,7 @@ function AdminPageApp() {
 				</div>
 			</div>
 			{ showShortcuts && (
-				<ShortcutsHelp
-					onClose={ () => setShowShortcuts( false ) }
-				/>
+				<ShortcutsHelp onClose={ () => setShowShortcuts( false ) } />
 			) }
 		</>
 	);

@@ -10,6 +10,15 @@ import { __ } from '@wordpress/i18n';
  */
 import STORE_NAME from '../store';
 
+/**
+ * Action buttons for a single message (copy, edit, regenerate).
+ * Shows edit for user messages and regenerate for model messages.
+ *
+ * @param {Object}                     props         - Component props.
+ * @param {import('../store').Message} props.message - The message to act on.
+ * @param {number}                     props.index   - Index of the message in the list.
+ * @return {JSX.Element} Message actions element.
+ */
 export default function MessageActions( { message, index } ) {
 	const [ copied, setCopied ] = useState( false );
 	const [ editing, setEditing ] = useState( false );
@@ -72,10 +81,7 @@ export default function MessageActions( { message, index } ) {
 					>
 						{ __( 'Send', 'ai-agent' ) }
 					</button>
-					<button
-						type="button"
-						onClick={ () => setEditing( false ) }
-					>
+					<button type="button" onClick={ () => setEditing( false ) }>
 						{ __( 'Cancel', 'ai-agent' ) }
 					</button>
 				</div>
@@ -94,7 +100,9 @@ export default function MessageActions( { message, index } ) {
 				onClick={ handleCopy }
 				title={ __( 'Copy', 'ai-agent' ) }
 			>
-				{ copied ? __( 'Copied', 'ai-agent' ) : __( 'Copy', 'ai-agent' ) }
+				{ copied
+					? __( 'Copied', 'ai-agent' )
+					: __( 'Copy', 'ai-agent' ) }
 			</button>
 			{ isUser && (
 				<button

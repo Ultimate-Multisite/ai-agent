@@ -17,7 +17,10 @@ const COMMANDS = [
 	},
 	{
 		name: '/remember',
-		description: __( 'Save a fact to memory (type fact after)', 'ai-agent' ),
+		description: __(
+			'Save a fact to memory (type fact after)',
+			'ai-agent'
+		),
 		action: 'remember',
 	},
 	{
@@ -47,11 +50,33 @@ const COMMANDS = [
 	},
 	{
 		name: '/debug',
-		description: __( 'Toggle debug mode (per-response metrics)', 'ai-agent' ),
+		description: __(
+			'Toggle debug mode (per-response metrics)',
+			'ai-agent'
+		),
 		action: 'debug',
 	},
 ];
 
+/**
+ * @typedef {Object} SlashCommand
+ * @property {string} name        - Command string (e.g. '/new').
+ * @property {string} description - Human-readable description.
+ * @property {string} action      - Action identifier passed to onSelect.
+ */
+
+/**
+ * Autocomplete menu for slash commands. Filters commands by the current input,
+ * supports keyboard navigation (arrow keys, Enter, Tab, Escape).
+ * Returns null when no commands match the filter.
+ *
+ * @param {Object}   props            - Component props.
+ * @param {string}   props.filter     - Current input text used to filter commands.
+ * @param {Function} props.onSelect   - Called with the selected SlashCommand object.
+ * @param {Function} props.onClose    - Called when the menu should close.
+ * @param {Object}   [props.position] - Optional position override (e.g. { bottom: '...' }).
+ * @return {JSX.Element|null} Slash command menu, or null if no matches.
+ */
 export default function SlashCommandMenu( {
 	filter,
 	onSelect,
@@ -116,9 +141,7 @@ export default function SlashCommandMenu( {
 					onClick={ () => onSelect( cmd ) }
 					onMouseEnter={ () => setSelectedIndex( i ) }
 				>
-					<span className="ai-agent-slash-name">
-						{ cmd.name }
-					</span>
+					<span className="ai-agent-slash-name">{ cmd.name }</span>
 					<span className="ai-agent-slash-desc">
 						{ cmd.description }
 					</span>

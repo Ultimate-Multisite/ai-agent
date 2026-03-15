@@ -13,6 +13,12 @@ import { plus, upload } from '@wordpress/icons';
 import STORE_NAME from '../store';
 import SessionContextMenu from './session-context-menu';
 
+/**
+ * Format a date string as a relative time label (e.g. 'just now', '3h ago').
+ *
+ * @param {string} dateStr - ISO date string without timezone (UTC assumed).
+ * @return {string} Relative time label.
+ */
 function relativeTime( dateStr ) {
 	if ( ! dateStr ) {
 		return '';
@@ -36,6 +42,14 @@ function relativeTime( dateStr ) {
 	return date.toLocaleDateString();
 }
 
+/**
+ * A single session row in the sidebar list.
+ *
+ * @param {Object}                     props          - Component props.
+ * @param {import('../store').Session} props.session  - Session data.
+ * @param {boolean}                    props.isActive - Whether this session is currently open.
+ * @return {JSX.Element} Session item element.
+ */
 function SessionItem( { session, isActive } ) {
 	const [ showMenu, setShowMenu ] = useState( false );
 	const { openSession } = useDispatch( STORE_NAME );
@@ -96,6 +110,12 @@ function SessionItem( { session, isActive } ) {
 	);
 }
 
+/**
+ * Session sidebar with search, filter tabs, folder navigation, and session list.
+ * Handles session import via file picker.
+ *
+ * @return {JSX.Element} Session sidebar element.
+ */
 export default function SessionSidebar() {
 	const {
 		sessions,
@@ -164,9 +184,7 @@ export default function SessionSidebar() {
 					importSession( data );
 				} catch {
 					// eslint-disable-next-line no-alert
-					window.alert(
-						__( 'Invalid JSON file.', 'ai-agent' )
-					);
+					window.alert( __( 'Invalid JSON file.', 'ai-agent' ) );
 				}
 			};
 			reader.readAsText( file );
@@ -211,7 +229,7 @@ export default function SessionSidebar() {
 				<input
 					type="text"
 					className="ai-agent-sidebar-search"
-					placeholder={ __( 'Search conversations...', 'ai-agent' ) }
+					placeholder={ __( 'Search conversations…', 'ai-agent' ) }
 					onChange={ handleSearchChange }
 				/>
 			</div>
@@ -272,8 +290,7 @@ export default function SessionSidebar() {
 						key={ session.id }
 						session={ session }
 						isActive={
-							currentSessionId ===
-							parseInt( session.id, 10 )
+							currentSessionId === parseInt( session.id, 10 )
 						}
 					/>
 				) ) }
