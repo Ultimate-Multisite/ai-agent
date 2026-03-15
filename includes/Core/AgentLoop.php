@@ -150,7 +150,7 @@ class AgentLoop {
 		if ( $confirmed ) {
 			// The last message in history is the model's tool call message.
 			$assistant_message = end( $this->history );
-			$response_message  = $this->get_ability_resolver()->execute_abilities( $assistant_message );
+			$response_message  = $this->execute_abilities_with_hooks( $assistant_message );
 			$this->history[]   = $response_message;
 			$this->log_tool_responses( $response_message );
 		} else {
@@ -237,7 +237,7 @@ class AgentLoop {
 			}
 
 			// Execute the ability calls and get the function response message.
-			$response_message = $this->get_ability_resolver()->execute_abilities( $assistant_message );
+			$response_message = $this->execute_abilities_with_hooks( $assistant_message );
 			$this->history[]  = $response_message;
 			$this->log_tool_responses( $response_message );
 		}
@@ -895,6 +895,107 @@ class AgentLoop {
 		}
 
 		return array_values( $all );
+	}
+
+	/**
+	 * Execute ability calls from an assistant message, firing WordPress hooks
+	 * before and after each individual ability execution.
+	 *
+	 * Fires the following hooks for each ability call found in the message:
+	 *
+	 * - Action `ai_agent_before_ability` — fires before each ability executes.
+	 * - Action `ai_agent_after_ability`  — fires after each ability executes.
+	 * - Filter `ai_agent_ability_result` — filters each ability's result.
+	 *
+	 * See the inline hook PHPDoc blocks below for full parameter documentation.
+	 *
+	 * @param Message $assistant_message The assistant message containing ability call parts.
+	 * @return Message The function-response message produced by the resolver.
+	 */
+	private function execute_abilities_with_hooks( Message $assistant_message ): Message {
+		// Collect all pending ability calls so we can fire before-hooks.
+		$pending_calls = [];
+
+		foreach ( $assistant_message->getParts() as $part ) {
+			$call = $part->getFunctionCall();
+			if ( ! $call ) {
+				continue;
+			}
+
+			// Convert the SDK function name (wpab__...) to the ability name used
+			// in wp_register_ability() (e.g. ai-agent/memory-save).
+			$fn_name      = $call->getName();
+			$ability_name = $fn_name;
+			if ( str_starts_with( $fn_name, 'wpab__' ) && class_exists( 'WP_AI_Client_Ability_Function_Resolver' ) ) {
+				$ability_name = \WP_AI_Client_Ability_Function_Resolver::function_name_to_ability_name( $fn_name );
+			}
+
+			$params = $call->getArgs() ?? [];
+
+			/**
+			 * Fires immediately before an ability is executed.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param string $ability_name The registered ability name (e.g. `ai-agent/memory-save`).
+			 * @param array  $params       The input parameters passed to the ability.
+			 */
+			do_action( 'ai_agent_before_ability', $ability_name, $params );
+
+			$pending_calls[] = [
+				'ability_name' => $ability_name,
+				'params'       => $params,
+			];
+		}
+
+		// Delegate to the SDK resolver for actual execution.
+		$response_message = $this->get_ability_resolver()->execute_abilities( $assistant_message );
+
+		// Fire after-hooks and apply result filters for each executed ability.
+		// We pair pending_calls with the function-response parts by position.
+		$response_parts = $response_message->getParts();
+		$call_index     = 0;
+
+		foreach ( $response_parts as $part ) {
+			$fn_response = $part->getFunctionResponse();
+			if ( ! $fn_response ) {
+				continue;
+			}
+
+			$call_data    = $pending_calls[ $call_index ] ?? null;
+			$ability_name = $call_data['ability_name'] ?? $fn_response->getName();
+			$params       = $call_data['params'] ?? [];
+			$result       = $fn_response->getResponse();
+
+			/**
+			 * Filters the result of an ability execution.
+			 *
+			 * Allows third-party plugins to modify, log, or replace the result
+			 * before it is returned to the AI model.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param mixed  $result       The result returned by the ability.
+			 * @param string $ability_name The registered ability name (e.g. `ai-agent/memory-save`).
+			 * @param array  $params       The input parameters that were passed to the ability.
+			 */
+			apply_filters( 'ai_agent_ability_result', $result, $ability_name, $params );
+
+			/**
+			 * Fires immediately after an ability has been executed.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param string $ability_name The registered ability name (e.g. `ai-agent/memory-save`).
+			 * @param array  $params       The input parameters that were passed to the ability.
+			 * @param mixed  $result       The raw result returned by the ability execution.
+			 */
+			do_action( 'ai_agent_after_ability', $ability_name, $params, $result );
+
+			++$call_index;
+		}
+
+		return $response_message;
 	}
 
 	/**
