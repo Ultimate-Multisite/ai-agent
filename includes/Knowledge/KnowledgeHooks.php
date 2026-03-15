@@ -25,11 +25,11 @@ class KnowledgeHooks {
 	public static function register(): void {
 		add_action( 'save_post', [ __CLASS__, 'handle_save_post' ], 20, 2 );
 		add_action( 'delete_post', [ __CLASS__, 'handle_delete_post' ], 10, 1 );
-		add_action( 'wp_ai_agent_reindex', [ __CLASS__, 'handle_cron_reindex' ] );
+		add_action( 'wp_gratis_ai_agent_reindex', [ __CLASS__, 'handle_cron_reindex' ] );
 
 		// Schedule hourly reindex if not already scheduled.
-		if ( ! wp_next_scheduled( 'wp_ai_agent_reindex' ) ) {
-			wp_schedule_event( time(), 'hourly', 'wp_ai_agent_reindex' );
+		if ( ! wp_next_scheduled( 'wp_gratis_ai_agent_reindex' ) ) {
+			wp_schedule_event( time(), 'hourly', 'wp_gratis_ai_agent_reindex' );
 		}
 	}
 
@@ -129,9 +129,9 @@ class KnowledgeHooks {
 	 * Clean up scheduled events on plugin deactivation.
 	 */
 	public static function deactivate(): void {
-		$timestamp = wp_next_scheduled( 'wp_ai_agent_reindex' );
+		$timestamp = wp_next_scheduled( 'wp_gratis_ai_agent_reindex' );
 		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'wp_ai_agent_reindex' );
+			wp_unschedule_event( $timestamp, 'wp_gratis_ai_agent_reindex' );
 		}
 	}
 }
