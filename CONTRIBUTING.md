@@ -1,4 +1,4 @@
-# Contributing to ai-agent-chore-aidevops-init
+# Contributing to gratis-ai-agent-chore-aidevops-init
 
 Thanks for your interest in contributing!
 

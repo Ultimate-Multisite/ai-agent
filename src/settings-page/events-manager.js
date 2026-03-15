@@ -42,9 +42,9 @@ export default function EventsManager() {
 	const fetchAll = useCallback( async () => {
 		try {
 			const [ result, trigs, prof ] = await Promise.all( [
-				apiFetch( { path: '/ai-agent/v1/event-automations' } ),
-				apiFetch( { path: '/ai-agent/v1/event-triggers' } ),
-				apiFetch( { path: '/ai-agent/v1/tool-profiles' } ).catch( () => [] ),
+				apiFetch( { path: '/gratis-ai-agent/v1/event-automations' } ),
+				apiFetch( { path: '/gratis-ai-agent/v1/event-triggers' } ),
+				apiFetch( { path: '/gratis-ai-agent/v1/tool-profiles' } ).catch( () => [] ),
 			] );
 			setEvents( result );
 			setTriggers( trigs );
@@ -82,22 +82,22 @@ export default function EventsManager() {
 
 			if ( editId ) {
 				await apiFetch( {
-					path: `/ai-agent/v1/event-automations/${ editId }`,
+					path: `/gratis-ai-agent/v1/event-automations/${ editId }`,
 					method: 'PATCH',
 					data,
 				} );
 			} else {
 				await apiFetch( {
-					path: '/ai-agent/v1/event-automations',
+					path: '/gratis-ai-agent/v1/event-automations',
 					method: 'POST',
 					data,
 				} );
 			}
 			resetForm();
 			fetchAll();
-			setNotice( { status: 'success', message: __( 'Event automation saved.', 'ai-agent' ) } );
+			setNotice( { status: 'success', message: __( 'Event automation saved.', 'gratis-ai-agent' ) } );
 		} catch ( err ) {
-			setNotice( { status: 'error', message: err.message || __( 'Failed to save.', 'ai-agent' ) } );
+			setNotice( { status: 'error', message: err.message || __( 'Failed to save.', 'gratis-ai-agent' ) } );
 		}
 	}, [ form, editId, resetForm, fetchAll ] );
 
@@ -118,9 +118,9 @@ export default function EventsManager() {
 
 	const handleDelete = useCallback( async ( id ) => {
 		// eslint-disable-next-line no-alert
-		if ( window.confirm( __( 'Delete this event automation?', 'ai-agent' ) ) ) {
+		if ( window.confirm( __( 'Delete this event automation?', 'gratis-ai-agent' ) ) ) {
 			await apiFetch( {
-				path: `/ai-agent/v1/event-automations/${ id }`,
+				path: `/gratis-ai-agent/v1/event-automations/${ id }`,
 				method: 'DELETE',
 			} );
 			fetchAll();
@@ -129,7 +129,7 @@ export default function EventsManager() {
 
 	const handleToggle = useCallback( async ( ev ) => {
 		await apiFetch( {
-			path: `/ai-agent/v1/event-automations/${ ev.id }`,
+			path: `/gratis-ai-agent/v1/event-automations/${ ev.id }`,
 			method: 'PATCH',
 			data: { enabled: ! ev.enabled },
 		} );
@@ -144,7 +144,7 @@ export default function EventsManager() {
 		}
 		try {
 			const result = await apiFetch( {
-				path: '/ai-agent/v1/automation-logs?trigger_type=event&limit=20',
+				path: '/gratis-ai-agent/v1/automation-logs?trigger_type=event&limit=20',
 			} );
 			setLogs( result );
 			setViewLogsId( id );
@@ -163,7 +163,7 @@ export default function EventsManager() {
 	}, {} );
 
 	const triggerOptions = [
-		{ label: __( 'Select a trigger...', 'ai-agent' ), value: '' },
+		{ label: __( 'Select a trigger...', 'gratis-ai-agent' ), value: '' },
 		...Object.entries( triggersByCategory ).flatMap( ( [ category, items ] ) => [
 			{
 				label: `--- ${ category.charAt( 0 ).toUpperCase() + category.slice( 1 ) } ---`,
@@ -180,17 +180,17 @@ export default function EventsManager() {
 	const selectedTrigger = triggers.find( ( t ) => t.hook_name === form.hook_name );
 
 	const profileOptions = [
-		{ label: __( 'None (all tools)', 'ai-agent' ), value: '' },
+		{ label: __( 'None (all tools)', 'gratis-ai-agent' ), value: '' },
 		...profiles.map( ( p ) => ( { label: p.name, value: p.slug } ) ),
 	];
 
 	return (
-		<div className="ai-agent-events-manager">
-			<div className="ai-agent-skill-header">
+		<div className="gratis-ai-agent-events-manager">
+			<div className="gratis-ai-agent-skill-header">
 				<div>
-					<h3>{ __( 'Event-Driven Automations', 'ai-agent' ) }</h3>
+					<h3>{ __( 'Event-Driven Automations', 'gratis-ai-agent' ) }</h3>
 					<p className="description">
-						{ __( 'Trigger AI actions when WordPress hooks fire — post published, user registered, order placed, etc.', 'ai-agent' ) }
+						{ __( 'Trigger AI actions when WordPress hooks fire — post published, user registered, order placed, etc.', 'gratis-ai-agent' ) }
 					</p>
 				</div>
 				{ ! showForm && (
@@ -200,7 +200,7 @@ export default function EventsManager() {
 						onClick={ () => { resetForm(); setShowForm( true ); } }
 						size="compact"
 					>
-						{ __( 'Add Event', 'ai-agent' ) }
+						{ __( 'Add Event', 'gratis-ai-agent' ) }
 					</Button>
 				) }
 			</div>
@@ -216,22 +216,22 @@ export default function EventsManager() {
 			) }
 
 			{ showForm && (
-				<div className="ai-agent-skill-form">
+				<div className="gratis-ai-agent-skill-form">
 					<TextControl
-						label={ __( 'Name', 'ai-agent' ) }
+						label={ __( 'Name', 'gratis-ai-agent' ) }
 						value={ form.name }
 						onChange={ ( v ) => updateForm( 'name', v ) }
-						placeholder={ __( 'e.g., "Auto-tag new posts"', 'ai-agent' ) }
+						placeholder={ __( 'e.g., "Auto-tag new posts"', 'gratis-ai-agent' ) }
 						__nextHasNoMarginBottom
 					/>
 					<TextControl
-						label={ __( 'Description', 'ai-agent' ) }
+						label={ __( 'Description', 'gratis-ai-agent' ) }
 						value={ form.description }
 						onChange={ ( v ) => updateForm( 'description', v ) }
 						__nextHasNoMarginBottom
 					/>
 					<SelectControl
-						label={ __( 'Trigger Hook', 'ai-agent' ) }
+						label={ __( 'Trigger Hook', 'gratis-ai-agent' ) }
 						value={ form.hook_name }
 						options={ triggerOptions }
 						onChange={ ( v ) => {
@@ -244,17 +244,17 @@ export default function EventsManager() {
 					/>
 
 					{ selectedTrigger && (
-						<div className="ai-agent-trigger-info">
+						<div className="gratis-ai-agent-trigger-info">
 							<p className="description">{ selectedTrigger.description }</p>
 							{ selectedTrigger.placeholders?.length > 0 && (
 								<p className="description">
-									<strong>{ __( 'Available placeholders:', 'ai-agent' ) }</strong>{ ' ' }
+									<strong>{ __( 'Available placeholders:', 'gratis-ai-agent' ) }</strong>{ ' ' }
 									{ selectedTrigger.placeholders.map( ( p ) => `{{${ p.key }}}` ).join( ', ' ) }
 								</p>
 							) }
 							{ selectedTrigger.conditions?.length > 0 && (
 								<p className="description">
-									<strong>{ __( 'Available conditions:', 'ai-agent' ) }</strong>{ ' ' }
+									<strong>{ __( 'Available conditions:', 'gratis-ai-agent' ) }</strong>{ ' ' }
 									{ selectedTrigger.conditions.map( ( c ) => c.key ).join( ', ' ) }
 								</p>
 							) }
@@ -262,28 +262,28 @@ export default function EventsManager() {
 					) }
 
 					<TextareaControl
-						label={ __( 'Prompt Template', 'ai-agent' ) }
+						label={ __( 'Prompt Template', 'gratis-ai-agent' ) }
 						value={ form.prompt_template }
 						onChange={ ( v ) => updateForm( 'prompt_template', v ) }
 						rows={ 6 }
-						help={ __( 'Use {{placeholders}} for dynamic data from the triggering event.', 'ai-agent' ) }
+						help={ __( 'Use {{placeholders}} for dynamic data from the triggering event.', 'gratis-ai-agent' ) }
 					/>
 					<TextareaControl
-						label={ __( 'Conditions (JSON)', 'ai-agent' ) }
+						label={ __( 'Conditions (JSON)', 'gratis-ai-agent' ) }
 						value={ form.conditions }
 						onChange={ ( v ) => updateForm( 'conditions', v ) }
 						rows={ 3 }
-						help={ __( 'Optional. e.g., {"post_type":"post","new_status":"publish"}', 'ai-agent' ) }
+						help={ __( 'Optional. e.g., {"post_type":"post","new_status":"publish"}', 'gratis-ai-agent' ) }
 					/>
 					<SelectControl
-						label={ __( 'Tool Profile', 'ai-agent' ) }
+						label={ __( 'Tool Profile', 'gratis-ai-agent' ) }
 						value={ form.tool_profile }
 						options={ profileOptions }
 						onChange={ ( v ) => updateForm( 'tool_profile', v ) }
 						__nextHasNoMarginBottom
 					/>
 					<TextControl
-						label={ __( 'Max Iterations', 'ai-agent' ) }
+						label={ __( 'Max Iterations', 'gratis-ai-agent' ) }
 						type="number"
 						min={ 1 }
 						max={ 50 }
@@ -291,80 +291,80 @@ export default function EventsManager() {
 						onChange={ ( v ) => updateForm( 'max_iterations', parseInt( v, 10 ) || 10 ) }
 						__nextHasNoMarginBottom
 					/>
-					<div className="ai-agent-skill-form-actions">
+					<div className="gratis-ai-agent-skill-form-actions">
 						<Button
 							variant="primary"
 							onClick={ handleSubmit }
 							disabled={ ! form.name.trim() || ! form.hook_name || ! form.prompt_template.trim() }
 							size="compact"
 						>
-							{ editId ? __( 'Update', 'ai-agent' ) : __( 'Create', 'ai-agent' ) }
+							{ editId ? __( 'Update', 'gratis-ai-agent' ) : __( 'Create', 'gratis-ai-agent' ) }
 						</Button>
 						<Button variant="tertiary" onClick={ resetForm } size="compact">
-							{ __( 'Cancel', 'ai-agent' ) }
+							{ __( 'Cancel', 'gratis-ai-agent' ) }
 						</Button>
 					</div>
 				</div>
 			) }
 
 			{ ! loaded && (
-				<p className="description">{ __( 'Loading...', 'ai-agent' ) }</p>
+				<p className="description">{ __( 'Loading...', 'gratis-ai-agent' ) }</p>
 			) }
 
 			{ loaded && events.length === 0 && ! showForm && (
 				<p className="description">
-					{ __( 'No event automations configured yet.', 'ai-agent' ) }
+					{ __( 'No event automations configured yet.', 'gratis-ai-agent' ) }
 				</p>
 			) }
 
 			{ events.length > 0 && (
-				<div className="ai-agent-skill-cards" style={ { marginTop: '16px' } }>
+				<div className="gratis-ai-agent-skill-cards" style={ { marginTop: '16px' } }>
 					{ events.map( ( ev ) => (
 						<div
 							key={ ev.id }
-							className={ `ai-agent-skill-card ${ ! ev.enabled ? 'ai-agent-skill-card--disabled' : '' }` }
+							className={ `gratis-ai-agent-skill-card ${ ! ev.enabled ? 'gratis-ai-agent-skill-card--disabled' : '' }` }
 						>
-							<div className="ai-agent-skill-card-header">
+							<div className="gratis-ai-agent-skill-card-header">
 								<ToggleControl
 									checked={ ev.enabled }
 									onChange={ () => handleToggle( ev ) }
 									__nextHasNoMarginBottom
 								/>
-								<div className="ai-agent-skill-card-title">
+								<div className="gratis-ai-agent-skill-card-title">
 									<strong>{ ev.name }</strong>
-									<span className="ai-agent-skill-badge">
+									<span className="gratis-ai-agent-skill-badge">
 										{ ev.hook_name }
 									</span>
 								</div>
 							</div>
-							<p className="ai-agent-skill-card-description">
+							<p className="gratis-ai-agent-skill-card-description">
 								{ ev.description || ev.prompt_template.slice( 0, 100 ) + '...' }
 							</p>
-							<div className="ai-agent-skill-card-footer">
-								<span className="ai-agent-skill-word-count">
-									{ ev.run_count }{ ' ' }{ __( 'runs', 'ai-agent' ) }
+							<div className="gratis-ai-agent-skill-card-footer">
+								<span className="gratis-ai-agent-skill-word-count">
+									{ ev.run_count }{ ' ' }{ __( 'runs', 'gratis-ai-agent' ) }
 									{ ev.last_run_at && (
-										<> &middot; { __( 'Last:', 'ai-agent' ) } { ev.last_run_at }</>
+										<> &middot; { __( 'Last:', 'gratis-ai-agent' ) } { ev.last_run_at }</>
 									) }
 								</span>
-								<div className="ai-agent-skill-card-actions">
+								<div className="gratis-ai-agent-skill-card-actions">
 									<Button
 										variant="tertiary"
 										size="small"
 										onClick={ () => handleViewLogs( ev.id ) }
 									>
-										{ viewLogsId === ev.id ? __( 'Hide Logs', 'ai-agent' ) : __( 'Logs', 'ai-agent' ) }
+										{ viewLogsId === ev.id ? __( 'Hide Logs', 'gratis-ai-agent' ) : __( 'Logs', 'gratis-ai-agent' ) }
 									</Button>
 									<Button
 										icon={ pencil }
 										size="small"
-										label={ __( 'Edit', 'ai-agent' ) }
+										label={ __( 'Edit', 'gratis-ai-agent' ) }
 										onClick={ () => handleEdit( ev ) }
 									/>
 									<Button
 										icon={ trash }
 										size="small"
-										label={ __( 'Delete', 'ai-agent' ) }
+										label={ __( 'Delete', 'gratis-ai-agent' ) }
 										isDestructive
 										onClick={ () => handleDelete( ev.id ) }
 									/>
@@ -372,14 +372,14 @@ export default function EventsManager() {
 							</div>
 
 							{ viewLogsId === ev.id && (
-								<div className="ai-agent-automation-logs">
+								<div className="gratis-ai-agent-automation-logs">
 									{ logs.length === 0 && (
-										<p className="description">{ __( 'No logs yet.', 'ai-agent' ) }</p>
+										<p className="description">{ __( 'No logs yet.', 'gratis-ai-agent' ) }</p>
 									) }
 									{ logs.map( ( log ) => (
-										<div key={ log.id } className={ `ai-agent-log-entry ai-agent-log--${ log.status }` }>
-											<div className="ai-agent-log-meta">
-												<span className={ `ai-agent-log-status ai-agent-log-status--${ log.status }` }>
+										<div key={ log.id } className={ `gratis-ai-agent-log-entry gratis-ai-agent-log--${ log.status }` }>
+											<div className="gratis-ai-agent-log-meta">
+												<span className={ `gratis-ai-agent-log-status gratis-ai-agent-log-status--${ log.status }` }>
 													{ log.status }
 												</span>
 												<span>{ log.trigger_name || log.hook_name }</span>
@@ -387,12 +387,12 @@ export default function EventsManager() {
 												<span>{ log.duration_ms }ms</span>
 											</div>
 											{ log.error_message && (
-												<p className="ai-agent-log-error">{ log.error_message }</p>
+												<p className="gratis-ai-agent-log-error">{ log.error_message }</p>
 											) }
 											{ log.reply && (
 												<details>
-													<summary>{ __( 'Response', 'ai-agent' ) }</summary>
-													<pre className="ai-agent-log-reply">{ log.reply }</pre>
+													<summary>{ __( 'Response', 'gratis-ai-agent' ) }</summary>
+													<pre className="gratis-ai-agent-log-reply">{ log.reply }</pre>
 												</details>
 											) }
 										</div>

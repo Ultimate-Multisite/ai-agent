@@ -54,7 +54,7 @@ function AdminPageApp() {
 			'mod+n': () => clearCurrentSession(),
 			'mod+k': () => {
 				const searchInput = document.querySelector(
-					'.ai-agent-sidebar-search'
+					'.gratis-ai-agent-sidebar-search'
 				);
 				if ( searchInput ) {
 					searchInput.focus();
@@ -81,9 +81,9 @@ function AdminPageApp() {
 
 	return (
 		<>
-			<div className="ai-agent-layout">
+			<div className="gratis-ai-agent-layout">
 				<SessionSidebar />
-				<div className="ai-agent-main">
+				<div className="gratis-ai-agent-main">
 					<ChatPanel onSlashCommand={ handleSlashCommand } />
 				</div>
 			</div>
@@ -96,7 +96,7 @@ function AdminPageApp() {
 	);
 }
 
-const container = document.getElementById( 'ai-agent-root' );
+const container = document.getElementById( 'gratis-ai-agent-root' );
 if ( container ) {
 	const root = createRoot( container );
 	root.render( <AdminPageApp /> );

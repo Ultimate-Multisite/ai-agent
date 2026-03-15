@@ -47,9 +47,9 @@ function parseSuggestions( text ) {
 
 function MessageBubble( { role, text } ) {
 	const classMap = {
-		user: 'ai-agent-bubble ai-agent-user',
-		model: 'ai-agent-bubble ai-agent-assistant',
-		system: 'ai-agent-bubble ai-agent-system',
+		user: 'gratis-ai-agent-bubble gratis-ai-agent-user',
+		model: 'gratis-ai-agent-bubble gratis-ai-agent-assistant',
+		system: 'gratis-ai-agent-bubble gratis-ai-agent-system',
 	};
 
 	if ( role === 'model' ) {
@@ -71,12 +71,12 @@ function SuggestionChips( { suggestions, onSelect } ) {
 	}
 
 	return (
-		<div className="ai-agent-suggestion-chips">
+		<div className="gratis-ai-agent-suggestion-chips">
 			{ suggestions.map( ( suggestion, i ) => (
 				<Button
 					key={ i }
 					variant="tertiary"
-					className="ai-agent-suggestion-chip"
+					className="gratis-ai-agent-suggestion-chip"
 					onClick={ () => onSelect( suggestion ) }
 				>
 					{ suggestion }
@@ -138,10 +138,10 @@ export default function MessageList() {
 	} );
 
 	return (
-		<div className="ai-agent-messages" ref={ messagesRef }>
+		<div className="gratis-ai-agent-messages" ref={ messagesRef }>
 			{ visibleMessages.length === 0 && ! sending && (
-				<div className="ai-agent-empty-state">
-					{ __( 'Send a message to start a conversation.', 'ai-agent' ) }
+				<div className="gratis-ai-agent-empty-state">
+					{ __( 'Send a message to start a conversation.', 'gratis-ai-agent' ) }
 				</div>
 			) }
 			{ visibleMessages.map( ( msg, i ) => {
@@ -161,7 +161,7 @@ export default function MessageList() {
 					i === visibleMessages.length - 1;
 
 				return (
-					<div key={ i } className="ai-agent-message-row">
+					<div key={ i } className="gratis-ai-agent-message-row">
 						{ msg.toolCalls?.length > 0 && (
 							<ToolCallDetails toolCalls={ msg.toolCalls } />
 						) }
@@ -183,9 +183,9 @@ export default function MessageList() {
 				);
 			} ) }
 			{ sending && (
-				<div className="ai-agent-bubble ai-agent-assistant ai-agent-thinking">
+				<div className="gratis-ai-agent-bubble gratis-ai-agent-assistant gratis-ai-agent-thinking">
 					<Spinner />
-					{ __( 'Thinking...', 'ai-agent' ) }
+					{ __( 'Thinking...', 'gratis-ai-agent' ) }
 				</div>
 			) }
 		</div>

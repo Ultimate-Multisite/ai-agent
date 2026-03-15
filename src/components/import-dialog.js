@@ -36,18 +36,19 @@ export default function ImportDialog( { onClose } ) {
 		reader.onload = ( evt ) => {
 			try {
 				const data = JSON.parse( evt.target.result );
-				if ( data.format !== 'ai-agent-v1' ) {
+				const validFormats = [ 'gratis-ai-agent-v1', 'ai-agent-v1' ];
+				if ( ! validFormats.includes( data.format ) ) {
 					setError(
 						__(
-							'Invalid format. Expected ai-agent-v1.',
-							'ai-agent'
+							'Invalid format. Expected gratis-ai-agent-v1.',
+							'gratis-ai-agent'
 						)
 					);
 					return;
 				}
 				setFileData( data );
 			} catch {
-				setError( __( 'Invalid JSON file.', 'ai-agent' ) );
+				setError( __( 'Invalid JSON file.', 'gratis-ai-agent' ) );
 			}
 		};
 		reader.readAsText( file );
@@ -72,20 +73,20 @@ export default function ImportDialog( { onClose } ) {
 	}, [ fileData, importSession, onClose ] );
 
 	return (
-		<div className="ai-agent-shortcuts-overlay">
-			<div className="ai-agent-export-dialog" ref={ dialogRef }>
-				<div className="ai-agent-export-header">
+		<div className="gratis-ai-agent-shortcuts-overlay">
+			<div className="gratis-ai-agent-export-dialog" ref={ dialogRef }>
+				<div className="gratis-ai-agent-export-header">
 					<h3>
-						{ __( 'Import Conversation', 'ai-agent' ) }
+						{ __( 'Import Conversation', 'gratis-ai-agent' ) }
 					</h3>
 					<button type="button" onClick={ onClose }>
 						&times;
 					</button>
 				</div>
-				<div className="ai-agent-export-body">
+				<div className="gratis-ai-agent-export-body">
 					<div
 						ref={ dropRef }
-						className="ai-agent-import-dropzone"
+						className="gratis-ai-agent-import-dropzone"
 						onDragOver={ ( e ) => e.preventDefault() }
 						onDrop={ handleDrop }
 						onClick={ () => {
@@ -103,16 +104,16 @@ export default function ImportDialog( { onClose } ) {
 						} }
 					>
 						{ fileName ? (
-							<div className="ai-agent-import-file">
+							<div className="gratis-ai-agent-import-file">
 								<strong>{ fileName }</strong>
 								{ fileData && (
 									<p>
 										{ fileData.title ||
-											__( 'Untitled', 'ai-agent' ) }{ ' ' }
+											__( 'Untitled', 'gratis-ai-agent' ) }{ ' ' }
 										({ ( fileData.messages?.length || 0 ) }{ ' ' }
 										{ __(
 											'messages',
-											'ai-agent'
+											'gratis-ai-agent'
 										) })
 									</p>
 								) }
@@ -121,22 +122,22 @@ export default function ImportDialog( { onClose } ) {
 							<p>
 								{ __(
 									'Drop a .json file here or click to browse',
-									'ai-agent'
+									'gratis-ai-agent'
 								) }
 							</p>
 						) }
 					</div>
 					{ error && (
-						<p className="ai-agent-import-error">{ error }</p>
+						<p className="gratis-ai-agent-import-error">{ error }</p>
 					) }
 				</div>
-				<div className="ai-agent-export-footer">
+				<div className="gratis-ai-agent-export-footer">
 					<button
 						type="button"
 						className="button"
 						onClick={ onClose }
 					>
-						{ __( 'Cancel', 'ai-agent' ) }
+						{ __( 'Cancel', 'gratis-ai-agent' ) }
 					</button>
 					<button
 						type="button"
@@ -144,7 +145,7 @@ export default function ImportDialog( { onClose } ) {
 						onClick={ handleImport }
 						disabled={ ! fileData }
 					>
-						{ __( 'Import', 'ai-agent' ) }
+						{ __( 'Import', 'gratis-ai-agent' ) }
 					</button>
 				</div>
 			</div>
