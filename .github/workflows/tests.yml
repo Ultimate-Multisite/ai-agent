@@ -46,6 +46,18 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # The wordpress:cli-php8.2 base image ships with WP-CLI that emits
+      # "Deprecated: trim(): Passing null to parameter #1 ($string) of type string"
+      # on PHP 8.2. wp-env runs WP-CLI commands inside the container via docker exec
+      # and treats any output to stderr as a fatal error, causing wp-env start to fail.
+      #
+      # Fix: set WP_CLI_PHP_ARGS to suppress PHP deprecation notices for WP-CLI.
+      # This is the correct approach — the deprecation is harmless and WP-CLI 2.x
+      # is not yet fully PHP 8.2 clean. Suppressing E_DEPRECATED for WP-CLI only
+      # does not affect PHPUnit test results.
+      - name: Set WP-CLI PHP args to suppress PHP 8.2 deprecation notices
+        run: echo "WP_CLI_PHP_ARGS=-d error_reporting=24575" >> $GITHUB_ENV
+
       - name: Start wp-env
         run: npm run wp-env:start
 
