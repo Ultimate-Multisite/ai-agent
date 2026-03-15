@@ -75,9 +75,7 @@ export default function ShortcutsHelp( { onClose } ) {
 					</div>
 					<div className="gratis-ai-agent-shortcut-row">
 						<span>/model</span>
-						<span>
-							{ __( 'Switch model', 'gratis-ai-agent' ) }
-						</span>
+						<span>{ __( 'Switch model', 'gratis-ai-agent' ) }</span>
 					</div>
 					<div className="gratis-ai-agent-shortcut-row">
 						<span>/clear</span>

@@ -10,7 +10,10 @@ const STORE_NAME = 'gratis-ai-agent';
 [ 'Provider', 'Model', 'DebugMode' ].forEach( ( key ) => {
 	const oldKey = `aiAgent${ key }`;
 	const newKey = `gratisAiAgent${ key }`;
-	if ( localStorage.getItem( oldKey ) !== null && localStorage.getItem( newKey ) === null ) {
+	if (
+		localStorage.getItem( oldKey ) !== null &&
+		localStorage.getItem( newKey ) === null
+	) {
 		localStorage.setItem( newKey, localStorage.getItem( oldKey ) );
 		localStorage.removeItem( oldKey );
 	}
@@ -150,7 +153,10 @@ const actions = {
 		return { type: 'TRUNCATE_MESSAGES_TO', index };
 	},
 	setDebugMode( enabled ) {
-		localStorage.setItem( 'gratisAiAgentDebugMode', enabled ? 'true' : 'false' );
+		localStorage.setItem(
+			'gratisAiAgentDebugMode',
+			enabled ? 'true' : 'false'
+		);
 		return { type: 'SET_DEBUG_MODE', enabled };
 	},
 	setSendTimestamp( ts ) {
@@ -208,7 +214,8 @@ const actions = {
 				}
 
 				const qs = params.toString();
-				const path = '/gratis-ai-agent/v1/sessions' + ( qs ? '?' + qs : '' );
+				const path =
+					'/gratis-ai-agent/v1/sessions' + ( qs ? '?' + qs : '' );
 
 				const sessions = await apiFetch( { path } );
 				dispatch.setSessions( sessions );
@@ -236,13 +243,9 @@ const actions = {
 						( p ) => p.id === session.provider_id
 					);
 					if ( providerExists ) {
-						dispatch.setSelectedProvider(
-							session.provider_id
-						);
+						dispatch.setSelectedProvider( session.provider_id );
 						if ( session.model_id ) {
-							dispatch.setSelectedModel(
-								session.model_id
-							);
+							dispatch.setSelectedModel( session.model_id );
 						}
 					}
 				}
@@ -368,10 +371,7 @@ const actions = {
 					? JSON.stringify( result.content, null, 2 )
 					: result.content;
 			const blob = new Blob( [ content ], {
-				type:
-					format === 'json'
-						? 'application/json'
-						: 'text/markdown',
+				type: format === 'json' ? 'application/json' : 'text/markdown',
 			} );
 			const url = URL.createObjectURL( blob );
 			const a = document.createElement( 'a' );
@@ -447,7 +447,9 @@ const actions = {
 					role: 'system',
 					parts: [
 						{
-							text: `Error: ${ err.message || 'Failed to confirm tool call' }`,
+							text: `Error: ${
+								err.message || 'Failed to confirm tool call'
+							}`,
 						},
 					],
 				} );
@@ -471,7 +473,9 @@ const actions = {
 					role: 'system',
 					parts: [
 						{
-							text: `Error: ${ err.message || 'Failed to reject tool call' }`,
+							text: `Error: ${
+								err.message || 'Failed to reject tool call'
+							}`,
 						},
 					],
 				} );
@@ -558,7 +562,9 @@ const actions = {
 					role: 'system',
 					parts: [
 						{
-							text: `Error: ${ err.message || 'Failed to start job' }`,
+							text: `Error: ${
+								err.message || 'Failed to start job'
+							}`,
 						},
 					],
 				} );
@@ -613,7 +619,9 @@ const actions = {
 							role: 'system',
 							parts: [
 								{
-									text: `Error: ${ result.message || 'Unknown error' }`,
+									text: `Error: ${
+										result.message || 'Unknown error'
+									}`,
 								},
 							],
 						} );
@@ -631,21 +639,36 @@ const actions = {
 							// Attach debug metadata when debug mode is active.
 							if ( select.isDebugMode() ) {
 								const sendTs = select.getSendTimestamp();
-								const elapsed = sendTs ? Date.now() - sendTs : 0;
+								const elapsed = sendTs
+									? Date.now() - sendTs
+									: 0;
 								const tu = result.token_usage || {};
 								const completionTokens = tu.completion || 0;
 								const promptTokens = tu.prompt || 0;
-								const tokPerSec = elapsed > 0 ? ( completionTokens / ( elapsed / 1000 ) ) : 0;
+								const tokPerSec =
+									elapsed > 0
+										? completionTokens / ( elapsed / 1000 )
+										: 0;
 
 								// Derive tool call count and names.
 								const tc = result.tool_calls || [];
-								const toolCalls = tc.filter( ( t ) => t.type === 'call' );
-								const toolNames = [ ...new Set( toolCalls.map( ( t ) => t.name ) ) ];
+								const toolCalls = tc.filter(
+									( t ) => t.type === 'call'
+								);
+								const toolNames = [
+									...new Set(
+										toolCalls.map( ( t ) => t.name )
+									),
+								];
 
 								msg.debug = {
 									responseTimeMs: elapsed,
-									tokenUsage: { prompt: promptTokens, completion: completionTokens },
-									tokensPerSecond: Math.round( tokPerSec * 10 ) / 10,
+									tokenUsage: {
+										prompt: promptTokens,
+										completion: completionTokens,
+									},
+									tokensPerSecond:
+										Math.round( tokPerSec * 10 ) / 10,
 									modelId: result.model_id || '',
 									costEstimate: result.cost_estimate || 0,
 									iterationsUsed: result.iterations_used || 0,

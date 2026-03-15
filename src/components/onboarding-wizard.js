@@ -3,11 +3,7 @@
  */
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
-import {
-	Button,
-	ToggleControl,
-	Spinner,
-} from '@wordpress/components';
+import { Button, ToggleControl, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -198,7 +194,9 @@ export default function OnboardingWizard( { onComplete } ) {
 					) ) }
 				</div>
 			</div>
-			<div className="gratis-ai-agent-wizard-body">{ current.content }</div>
+			<div className="gratis-ai-agent-wizard-body">
+				{ current.content }
+			</div>
 			<div className="gratis-ai-agent-wizard-footer">
 				{ step > 0 && (
 					<Button

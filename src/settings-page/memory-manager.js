@@ -81,7 +81,9 @@ export default function MemoryManager() {
 	const handleDelete = useCallback(
 		async ( id ) => {
 			// eslint-disable-next-line no-alert
-			if ( window.confirm( __( 'Delete this memory?', 'gratis-ai-agent' ) ) ) {
+			if (
+				window.confirm( __( 'Delete this memory?', 'gratis-ai-agent' ) )
+			) {
 				await deleteMemory( id );
 			}
 		},
@@ -150,7 +152,7 @@ export default function MemoryManager() {
 
 			{ ! memoriesLoaded && (
 				<p className="description">
-					{ __( 'Loading...', 'gratis-ai-agent' ) }
+					{ __( 'Loading…', 'gratis-ai-agent' ) }
 				</p>
 			) }
 

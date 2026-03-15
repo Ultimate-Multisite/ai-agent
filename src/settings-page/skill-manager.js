@@ -18,13 +18,8 @@ import { trash, pencil, plus, backup } from '@wordpress/icons';
 import STORE_NAME from '../store';
 
 export default function SkillManager() {
-	const {
-		fetchSkills,
-		createSkill,
-		updateSkill,
-		deleteSkill,
-		resetSkill,
-	} = useDispatch( STORE_NAME );
+	const { fetchSkills, createSkill, updateSkill, deleteSkill, resetSkill } =
+		useDispatch( STORE_NAME );
 	const { skills, skillsLoaded } = useSelect(
 		( select ) => ( {
 			skills: select( STORE_NAME ).getSkills(),
@@ -101,9 +96,7 @@ export default function SkillManager() {
 		async ( id ) => {
 			// eslint-disable-next-line no-alert
 			if (
-				window.confirm(
-					__( 'Delete this skill?', 'gratis-ai-agent' )
-				)
+				window.confirm( __( 'Delete this skill?', 'gratis-ai-agent' ) )
 			) {
 				await deleteSkill( id );
 			}
@@ -227,7 +220,7 @@ export default function SkillManager() {
 
 			{ ! skillsLoaded && (
 				<p className="description">
-					{ __( 'Loading...', 'gratis-ai-agent' ) }
+					{ __( 'Loading…', 'gratis-ai-agent' ) }
 				</p>
 			) }
 
@@ -254,9 +247,7 @@ export default function SkillManager() {
 							<div className="gratis-ai-agent-skill-card-header">
 								<ToggleControl
 									checked={ skill.enabled }
-									onChange={ () =>
-										handleToggle( skill )
-									}
+									onChange={ () => handleToggle( skill ) }
 									__nextHasNoMarginBottom
 								/>
 								<div className="gratis-ai-agent-skill-card-title">
@@ -287,9 +278,7 @@ export default function SkillManager() {
 											'Edit',
 											'gratis-ai-agent'
 										) }
-										onClick={ () =>
-											handleEdit( skill )
-										}
+										onClick={ () => handleEdit( skill ) }
 									/>
 									{ skill.is_builtin ? (
 										<Button

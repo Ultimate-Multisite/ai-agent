@@ -211,7 +211,10 @@ export default function SessionSidebar() {
 				<input
 					type="text"
 					className="gratis-ai-agent-sidebar-search"
-					placeholder={ __( 'Search conversations...', 'gratis-ai-agent' ) }
+					placeholder={ __(
+						'Search conversations…',
+						'gratis-ai-agent'
+					) }
 					onChange={ handleSearchChange }
 				/>
 			</div>
@@ -263,7 +266,10 @@ export default function SessionSidebar() {
 						{ sessionFilter === 'trash'
 							? __( 'Trash is empty', 'gratis-ai-agent' )
 							: sessionFilter === 'archived'
-							? __( 'No archived conversations', 'gratis-ai-agent' )
+							? __(
+									'No archived conversations',
+									'gratis-ai-agent'
+							  )
 							: __( 'No conversations yet', 'gratis-ai-agent' ) }
 					</div>
 				) }
@@ -272,8 +278,7 @@ export default function SessionSidebar() {
 						key={ session.id }
 						session={ session }
 						isActive={
-							currentSessionId ===
-							parseInt( session.id, 10 )
+							currentSessionId === parseInt( session.id, 10 )
 						}
 					/>
 				) ) }

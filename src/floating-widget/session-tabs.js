@@ -49,7 +49,9 @@ export default function SessionTabs() {
 							isActive ? 'is-active' : ''
 						}` }
 						onClick={ () => openSession( id ) }
-						title={ session.title || __( 'Untitled', 'gratis-ai-agent' ) }
+						title={
+							session.title || __( 'Untitled', 'gratis-ai-agent' )
+						}
 						type="button"
 					>
 						{ truncateTitle( session.title ) }

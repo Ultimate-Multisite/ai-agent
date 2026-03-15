@@ -38,7 +38,9 @@ export default function ToolProfilesManager() {
 
 	const fetchProfiles = useCallback( async () => {
 		try {
-			const result = await apiFetch( { path: '/gratis-ai-agent/v1/tool-profiles' } );
+			const result = await apiFetch( {
+				path: '/gratis-ai-agent/v1/tool-profiles',
+			} );
 			setProfiles( result );
 		} catch {
 			setProfiles( [] );
@@ -93,11 +95,25 @@ export default function ToolProfilesManager() {
 			}
 			resetForm();
 			fetchProfiles();
-			setNotice( { status: 'success', message: __( 'Profile saved.', 'gratis-ai-agent' ) } );
+			setNotice( {
+				status: 'success',
+				message: __( 'Profile saved.', 'gratis-ai-agent' ),
+			} );
 		} catch ( err ) {
-			setNotice( { status: 'error', message: err.message || __( 'Failed to save.', 'gratis-ai-agent' ) } );
+			setNotice( {
+				status: 'error',
+				message:
+					err.message || __( 'Failed to save.', 'gratis-ai-agent' ),
+			} );
 		}
-	}, [ formName, formDescription, formToolNames, editSlug, resetForm, fetchProfiles ] );
+	}, [
+		formName,
+		formDescription,
+		formToolNames,
+		editSlug,
+		resetForm,
+		fetchProfiles,
+	] );
 
 	const handleEdit = useCallback( ( profile ) => {
 		setEditSlug( profile.slug );
@@ -107,27 +123,40 @@ export default function ToolProfilesManager() {
 		setShowForm( true );
 	}, [] );
 
-	const handleDelete = useCallback( async ( slug ) => {
-		// eslint-disable-next-line no-alert
-		if ( window.confirm( __( 'Delete this profile?', 'gratis-ai-agent' ) ) ) {
-			await apiFetch( {
-				path: `/gratis-ai-agent/v1/tool-profiles/${ slug }`,
-				method: 'DELETE',
-			} );
-			fetchProfiles();
-		}
-	}, [ fetchProfiles ] );
+	const handleDelete = useCallback(
+		async ( slug ) => {
+			// eslint-disable-next-line no-alert
+			if (
+				window.confirm(
+					__( 'Delete this profile?', 'gratis-ai-agent' )
+				)
+			) {
+				await apiFetch( {
+					path: `/gratis-ai-agent/v1/tool-profiles/${ slug }`,
+					method: 'DELETE',
+				} );
+				fetchProfiles();
+			}
+		},
+		[ fetchProfiles ]
+	);
 
-	const handleActivate = useCallback( async ( slug ) => {
-		const newValue = settings?.active_tool_profile === slug ? '' : slug;
-		await saveSettings( { active_tool_profile: newValue } );
-		setNotice( {
-			status: 'success',
-			message: newValue
-				? __( 'Profile activated.', 'gratis-ai-agent' )
-				: __( 'Profile deactivated. All tools are now available.', 'gratis-ai-agent' ),
-		} );
-	}, [ settings, saveSettings ] );
+	const handleActivate = useCallback(
+		async ( slug ) => {
+			const newValue = settings?.active_tool_profile === slug ? '' : slug;
+			await saveSettings( { active_tool_profile: newValue } );
+			setNotice( {
+				status: 'success',
+				message: newValue
+					? __( 'Profile activated.', 'gratis-ai-agent' )
+					: __(
+							'Profile deactivated. All tools are now available.',
+							'gratis-ai-agent'
+					  ),
+			} );
+		},
+		[ settings, saveSettings ]
+	);
 
 	const activeProfile = settings?.active_tool_profile || '';
 
@@ -143,7 +172,10 @@ export default function ToolProfilesManager() {
 				<div>
 					<h3>{ __( 'Tool Profiles', 'gratis-ai-agent' ) }</h3>
 					<p className="description">
-						{ __( 'Profiles restrict which tools the AI can access. Useful for security (read-only mode) or token savings.', 'gratis-ai-agent' ) }
+						{ __(
+							'Profiles restrict which tools the AI can access. Useful for security (read-only mode) or token savings.',
+							'gratis-ai-agent'
+						) }
 					</p>
 				</div>
 				{ ! showForm && (
@@ -173,12 +205,18 @@ export default function ToolProfilesManager() {
 				value={ activeProfile }
 				options={ profileOptions }
 				onChange={ handleActivate }
-				help={ __( 'Select a profile to restrict the AI to a specific set of tools.', 'gratis-ai-agent' ) }
+				help={ __(
+					'Select a profile to restrict the AI to a specific set of tools.',
+					'gratis-ai-agent'
+				) }
 				__nextHasNoMarginBottom
 			/>
 
 			{ showForm && (
-				<div className="gratis-ai-agent-skill-form" style={ { marginTop: '16px' } }>
+				<div
+					className="gratis-ai-agent-skill-form"
+					style={ { marginTop: '16px' } }
+				>
 					<TextControl
 						label={ __( 'Name', 'gratis-ai-agent' ) }
 						value={ formName }
@@ -192,13 +230,16 @@ export default function ToolProfilesManager() {
 						__nextHasNoMarginBottom
 					/>
 					<TextareaControl
-						label={ __( 'Tool Name Prefixes (one per line)', 'gratis-ai-agent' ) }
+						label={ __(
+							'Tool Name Prefixes (one per line)',
+							'gratis-ai-agent'
+						) }
 						value={ formToolNames }
 						onChange={ setFormToolNames }
 						rows={ 8 }
 						help={ __(
 							'Enter tool name prefixes, one per line. Use partial names for matching (e.g., "wp_read" matches all read tools). Available tools: ' +
-							abilities.map( ( a ) => a.name ).join( ', ' ),
+								abilities.map( ( a ) => a.name ).join( ', ' ),
 							'gratis-ai-agent'
 						) }
 					/>
@@ -209,9 +250,15 @@ export default function ToolProfilesManager() {
 							disabled={ ! formName.trim() }
 							size="compact"
 						>
-							{ editSlug ? __( 'Update', 'gratis-ai-agent' ) : __( 'Create', 'gratis-ai-agent' ) }
+							{ editSlug
+								? __( 'Update', 'gratis-ai-agent' )
+								: __( 'Create', 'gratis-ai-agent' ) }
 						</Button>
-						<Button variant="tertiary" onClick={ resetForm } size="compact">
+						<Button
+							variant="tertiary"
+							onClick={ resetForm }
+							size="compact"
+						>
 							{ __( 'Cancel', 'gratis-ai-agent' ) }
 						</Button>
 					</div>
@@ -219,27 +266,48 @@ export default function ToolProfilesManager() {
 			) }
 
 			{ ! loaded && (
-				<p className="description">{ __( 'Loading...', 'gratis-ai-agent' ) }</p>
+				<p className="description">
+					{ __( 'Loading…', 'gratis-ai-agent' ) }
+				</p>
 			) }
 
 			{ loaded && profiles.length > 0 && (
-				<div className="gratis-ai-agent-skill-cards" style={ { marginTop: '16px' } }>
+				<div
+					className="gratis-ai-agent-skill-cards"
+					style={ { marginTop: '16px' } }
+				>
 					{ profiles.map( ( profile ) => (
 						<div
 							key={ profile.slug }
-							className={ `gratis-ai-agent-skill-card ${ activeProfile === profile.slug ? 'gratis-ai-agent-skill-card--active' : '' }` }
+							className={ `gratis-ai-agent-skill-card ${
+								activeProfile === profile.slug
+									? 'gratis-ai-agent-skill-card--active'
+									: ''
+							}` }
 						>
 							<div className="gratis-ai-agent-skill-card-header">
 								<div className="gratis-ai-agent-skill-card-title">
 									<strong>{ profile.name }</strong>
 									{ profile.is_builtin && (
 										<span className="gratis-ai-agent-skill-badge">
-											{ __( 'Built-in', 'gratis-ai-agent' ) }
+											{ __(
+												'Built-in',
+												'gratis-ai-agent'
+											) }
 										</span>
 									) }
 									{ activeProfile === profile.slug && (
-										<span className="gratis-ai-agent-skill-badge" style={ { background: '#00a32a', color: '#fff' } }>
-											{ __( 'Active', 'gratis-ai-agent' ) }
+										<span
+											className="gratis-ai-agent-skill-badge"
+											style={ {
+												background: '#00a32a',
+												color: '#fff',
+											} }
+										>
+											{ __(
+												'Active',
+												'gratis-ai-agent'
+											) }
 										</span>
 									) }
 								</div>
@@ -258,15 +326,25 @@ export default function ToolProfilesManager() {
 											<Button
 												icon={ pencil }
 												size="small"
-												label={ __( 'Edit', 'gratis-ai-agent' ) }
-												onClick={ () => handleEdit( profile ) }
+												label={ __(
+													'Edit',
+													'gratis-ai-agent'
+												) }
+												onClick={ () =>
+													handleEdit( profile )
+												}
 											/>
 											<Button
 												icon={ trash }
 												size="small"
-												label={ __( 'Delete', 'gratis-ai-agent' ) }
+												label={ __(
+													'Delete',
+													'gratis-ai-agent'
+												) }
 												isDestructive
-												onClick={ () => handleDelete( profile.slug ) }
+												onClick={ () =>
+													handleDelete( profile.slug )
+												}
 											/>
 										</>
 									) }

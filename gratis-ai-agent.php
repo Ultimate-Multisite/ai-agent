@@ -76,8 +76,8 @@ add_action(
 			wp_register_ability_category(
 				'gratis-ai-agent',
 				[
-				'label'       => __( 'Gratis AI Agent', 'gratis-ai-agent' ),
-				'description' => __( 'Gratis AI Agent memory and skill abilities.', 'gratis-ai-agent' ),
+					'label'       => __( 'Gratis AI Agent', 'gratis-ai-agent' ),
+					'description' => __( 'Gratis AI Agent memory and skill abilities.', 'gratis-ai-agent' ),
 				]
 			);
 		}

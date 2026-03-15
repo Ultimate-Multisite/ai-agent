@@ -72,10 +72,10 @@ class CliCommand extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
- *     wp gratis-ai-agent "how many sites we got??"
- *     wp gratis-ai-agent "how many sites we got??" --model=qwen3.5
- *     wp gratis-ai-agent "list all plugins" --max-iterations=5
- *     wp gratis-ai-agent "what day is it?" --skip-tools
+	 *     wp gratis-ai-agent "how many sites we got??"
+	 *     wp gratis-ai-agent "how many sites we got??" --model=qwen3.5
+	 *     wp gratis-ai-agent "list all plugins" --max-iterations=5
+	 *     wp gratis-ai-agent "what day is it?" --skip-tools
 	 *
 	 * @when after_wp_load
 	 *

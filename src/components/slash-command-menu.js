@@ -12,17 +12,26 @@ const COMMANDS = [
 	},
 	{
 		name: '/model',
-		description: __( 'Switch model (type model name after)', 'gratis-ai-agent' ),
+		description: __(
+			'Switch model (type model name after)',
+			'gratis-ai-agent'
+		),
 		action: 'model',
 	},
 	{
 		name: '/remember',
-		description: __( 'Save a fact to memory (type fact after)', 'gratis-ai-agent' ),
+		description: __(
+			'Save a fact to memory (type fact after)',
+			'gratis-ai-agent'
+		),
 		action: 'remember',
 	},
 	{
 		name: '/forget',
-		description: __( 'Forget memories matching a topic', 'gratis-ai-agent' ),
+		description: __(
+			'Forget memories matching a topic',
+			'gratis-ai-agent'
+		),
 		action: 'forget',
 	},
 	{
@@ -37,7 +46,10 @@ const COMMANDS = [
 	},
 	{
 		name: '/compact',
-		description: __( 'Compact conversation to save context', 'gratis-ai-agent' ),
+		description: __(
+			'Compact conversation to save context',
+			'gratis-ai-agent'
+		),
 		action: 'compact',
 	},
 	{
@@ -47,7 +59,10 @@ const COMMANDS = [
 	},
 	{
 		name: '/debug',
-		description: __( 'Toggle debug mode (per-response metrics)', 'gratis-ai-agent' ),
+		description: __(
+			'Toggle debug mode (per-response metrics)',
+			'gratis-ai-agent'
+		),
 		action: 'debug',
 	},
 ];

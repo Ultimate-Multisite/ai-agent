@@ -26,7 +26,9 @@ export default function ChatPanel( { compact = false, onSlashCommand } ) {
 
 	return (
 		<div
-			className={ `gratis-ai-agent-chat-panel ${ compact ? 'is-compact' : '' }` }
+			className={ `gratis-ai-agent-chat-panel ${
+				compact ? 'is-compact' : ''
+			}` }
 		>
 			<div className="gratis-ai-agent-header">
 				<ProviderSelector compact={ compact } />

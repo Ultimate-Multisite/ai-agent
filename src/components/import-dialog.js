@@ -76,9 +76,7 @@ export default function ImportDialog( { onClose } ) {
 		<div className="gratis-ai-agent-shortcuts-overlay">
 			<div className="gratis-ai-agent-export-dialog" ref={ dialogRef }>
 				<div className="gratis-ai-agent-export-header">
-					<h3>
-						{ __( 'Import Conversation', 'gratis-ai-agent' ) }
-					</h3>
+					<h3>{ __( 'Import Conversation', 'gratis-ai-agent' ) }</h3>
 					<button type="button" onClick={ onClose }>
 						&times;
 					</button>
@@ -90,8 +88,7 @@ export default function ImportDialog( { onClose } ) {
 						onDragOver={ ( e ) => e.preventDefault() }
 						onDrop={ handleDrop }
 						onClick={ () => {
-							const input =
-								document.createElement( 'input' );
+							const input = document.createElement( 'input' );
 							input.type = 'file';
 							input.accept = '.json';
 							input.onchange = ( e ) => {
@@ -109,12 +106,12 @@ export default function ImportDialog( { onClose } ) {
 								{ fileData && (
 									<p>
 										{ fileData.title ||
-											__( 'Untitled', 'gratis-ai-agent' ) }{ ' ' }
-										({ ( fileData.messages?.length || 0 ) }{ ' ' }
-										{ __(
-											'messages',
-											'gratis-ai-agent'
-										) })
+											__(
+												'Untitled',
+												'gratis-ai-agent'
+											) }{ ' ' }
+										({ fileData.messages?.length || 0 }{ ' ' }
+										{ __( 'messages', 'gratis-ai-agent' ) })
 									</p>
 								) }
 							</div>
@@ -128,7 +125,9 @@ export default function ImportDialog( { onClose } ) {
 						) }
 					</div>
 					{ error && (
-						<p className="gratis-ai-agent-import-error">{ error }</p>
+						<p className="gratis-ai-agent-import-error">
+							{ error }
+						</p>
 					) }
 				</div>
 				<div className="gratis-ai-agent-export-footer">

@@ -14,10 +14,7 @@ import apiFetch from '@wordpress/api-fetch';
 import STORE_NAME from '../store';
 import SlashCommandMenu from './slash-command-menu';
 
-export default function MessageInput( {
-	compact = false,
-	onSlashCommand,
-} ) {
+export default function MessageInput( { compact = false, onSlashCommand } ) {
 	const [ text, setText ] = useState( '' );
 	const [ showSlash, setShowSlash ] = useState( false );
 	const textareaRef = useRef( null );
@@ -76,15 +73,26 @@ export default function MessageInput( {
 					path: '/gratis-ai-agent/v1/memory',
 					method: 'POST',
 					data: { category: 'general', content: fact },
-				} ).then( () => {
-					if ( onSlashCommand ) {
-						onSlashCommand( 'notice', __( 'Memory saved.', 'gratis-ai-agent' ) );
-					}
-				} ).catch( () => {
-					if ( onSlashCommand ) {
-						onSlashCommand( 'notice', __( 'Failed to save memory.', 'gratis-ai-agent' ) );
-					}
-				} );
+				} )
+					.then( () => {
+						if ( onSlashCommand ) {
+							onSlashCommand(
+								'notice',
+								__( 'Memory saved.', 'gratis-ai-agent' )
+							);
+						}
+					} )
+					.catch( () => {
+						if ( onSlashCommand ) {
+							onSlashCommand(
+								'notice',
+								__(
+									'Failed to save memory.',
+									'gratis-ai-agent'
+								)
+							);
+						}
+					} );
 			}
 			setText( '' );
 			return;
@@ -98,20 +106,45 @@ export default function MessageInput( {
 					path: '/gratis-ai-agent/v1/memory/forget',
 					method: 'POST',
 					data: { topic },
-				} ).then( ( result ) => {
-					if ( onSlashCommand ) {
-						const count = result?.deleted || 0;
-						onSlashCommand( 'notice',
-							count > 0
-								? `${ count } ${ count === 1 ? __( 'memory', 'gratis-ai-agent' ) : __( 'memories', 'gratis-ai-agent' ) } ${ __( 'deleted.', 'gratis-ai-agent' ) }`
-								: __( 'No matching memories found.', 'gratis-ai-agent' )
-						);
-					}
-				} ).catch( () => {
-					if ( onSlashCommand ) {
-						onSlashCommand( 'notice', __( 'Failed to forget memories.', 'gratis-ai-agent' ) );
-					}
-				} );
+				} )
+					.then( ( result ) => {
+						if ( onSlashCommand ) {
+							const count = result?.deleted || 0;
+							onSlashCommand(
+								'notice',
+								count > 0
+									? `${ count } ${
+											count === 1
+												? __(
+														'memory',
+														'gratis-ai-agent'
+												  )
+												: __(
+														'memories',
+														'gratis-ai-agent'
+												  )
+									  } ${ __(
+											'deleted.',
+											'gratis-ai-agent'
+									  ) }`
+									: __(
+											'No matching memories found.',
+											'gratis-ai-agent'
+									  )
+							);
+						}
+					} )
+					.catch( () => {
+						if ( onSlashCommand ) {
+							onSlashCommand(
+								'notice',
+								__(
+									'Failed to forget memories.',
+									'gratis-ai-agent'
+								)
+							);
+						}
+					} );
 			}
 			setText( '' );
 			return;
@@ -236,7 +269,7 @@ export default function MessageInput( {
 				className="gratis-ai-agent-input"
 				rows={ 1 }
 				placeholder={ __(
-					'Type a message or / for commands...',
+					'Type a message or / for commands…',
 					'gratis-ai-agent'
 				) }
 				value={ text }

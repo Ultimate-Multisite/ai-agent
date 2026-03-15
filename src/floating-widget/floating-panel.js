@@ -26,8 +26,7 @@ export default function FloatingPanel() {
 		[]
 	);
 
-	const { position, isDragging, handleMouseDown, resetPosition } =
-		useDrag();
+	const { position, isDragging, handleMouseDown, resetPosition } = useDrag();
 
 	// Build inline styles for custom position.
 	const panelStyle = {};
@@ -80,9 +79,7 @@ export default function FloatingPanel() {
 								? __( 'Expand', 'gratis-ai-agent' )
 								: __( 'Minimize', 'gratis-ai-agent' )
 						}
-						onClick={ () =>
-							setFloatingMinimized( ! isMinimized )
-						}
+						onClick={ () => setFloatingMinimized( ! isMinimized ) }
 					/>
 					<Button
 						icon={ close }

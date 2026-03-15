@@ -32,7 +32,7 @@
 }
 
 .gratis-ai-agent-fab svg {
-	fill: currentColor;
+	fill: currentcolor;
 }
 
 /* Floating panel */
@@ -100,7 +100,7 @@
 }
 
 .gratis-ai-agent-floating-titlebar-actions .components-button svg {
-	fill: currentColor;
+	fill: currentcolor;
 }
 
 /* Session Tabs */
@@ -245,23 +245,28 @@
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant p {
 	margin: 0 0 0.5em;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant p:last-child {
 	margin-bottom: 0;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant ul,
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant ol {
 	margin: 0.3em 0;
 	padding-left: 1.3em;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant li {
 	margin-bottom: 0.15em;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant code {
 	background: #e0e0e0;
 	padding: 1px 4px;
 	border-radius: 3px;
 	font-size: 0.85em;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant pre {
 	background: #1d2327;
 	color: #e0e0e0;
@@ -272,14 +277,17 @@
 	font-size: 0.8em;
 	line-height: 1.4;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant pre code {
 	background: none;
 	padding: 0;
 	color: inherit;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant strong {
 	font-weight: 600;
 }
+
 .gratis-ai-agent-floating-panel .gratis-ai-agent-assistant hr {
 	border: none;
 	border-top: 1px solid #dcdcde;
@@ -375,6 +383,7 @@
 
 /* Responsive */
 @media (max-width: 500px) {
+
 	.gratis-ai-agent-floating-panel {
 		width: calc(100vw - 16px);
 		height: calc(100vh - 80px);
@@ -470,7 +479,7 @@
 }
 
 .gratis-ai-agent-debug-detail {
-	font-weight: normal;
+	font-weight: 400;
 	color: #a7aaad;
 	margin-left: 4px;
 }

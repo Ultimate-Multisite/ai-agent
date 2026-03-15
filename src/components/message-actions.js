@@ -72,10 +72,7 @@ export default function MessageActions( { message, index } ) {
 					>
 						{ __( 'Send', 'gratis-ai-agent' ) }
 					</button>
-					<button
-						type="button"
-						onClick={ () => setEditing( false ) }
-					>
+					<button type="button" onClick={ () => setEditing( false ) }>
 						{ __( 'Cancel', 'gratis-ai-agent' ) }
 					</button>
 				</div>
@@ -94,7 +91,9 @@ export default function MessageActions( { message, index } ) {
 				onClick={ handleCopy }
 				title={ __( 'Copy', 'gratis-ai-agent' ) }
 			>
-				{ copied ? __( 'Copied', 'gratis-ai-agent' ) : __( 'Copy', 'gratis-ai-agent' ) }
+				{ copied
+					? __( 'Copied', 'gratis-ai-agent' )
+					: __( 'Copy', 'gratis-ai-agent' ) }
 			</button>
 			{ isUser && (
 				<button

@@ -28,7 +28,10 @@ export default function ToolConfirmationDialog( {
 
 	return (
 		<div className="gratis-ai-agent-shortcuts-overlay">
-			<div className="gratis-ai-agent-tool-confirm-dialog" ref={ dialogRef }>
+			<div
+				className="gratis-ai-agent-tool-confirm-dialog"
+				ref={ dialogRef }
+			>
 				<div className="gratis-ai-agent-tool-confirm-header">
 					<h3>
 						{ __(
