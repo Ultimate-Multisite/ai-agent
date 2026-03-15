@@ -1,0 +1,640 @@
+name: Issue Sync - Bi-directional TODO.md ↔ GitHub Issues
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'TODO.md'
+      - 'todo/PLANS.md'
+      - 'todo/tasks/**'
+  pull_request_target:
+    branches: [main]
+    types: [closed, opened, edited]
+  issues:
+    types: [opened, closed]
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Sync command to run'
+        required: true
+        default: 'status'
+        type: choice
+        options:
+          - status
+          - pull
+          - push
+          - close
+          - reconcile
+          - enrich
+
+jobs:
+  sync-on-push:
+    name: Sync TODO.md → GitHub Issues
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: issue-sync-push-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Check commit author
+        id: check-author
+        env:
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
+        run: |
+          # Prevent infinite loops: skip if this commit was made by GitHub Actions
+          # Note: COMMIT_AUTHOR passed via env to prevent shell injection from
+          # untrusted input (backticks, $() etc in author names)
+          if [[ "$COMMIT_AUTHOR" == "GitHub Actions" ]] || [[ "$COMMIT_AUTHOR" == "github-actions[bot]" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: commit was made by GitHub Actions (loop prevention)"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.check-author.outputs.skip != 'true'
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        if: steps.check-author.outputs.skip != 'true'
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Close issues for completed tasks
+        if: steps.check-author.outputs.skip != 'true'
+        run: |
+          chmod +x .agents/scripts/issue-sync-helper.sh
+          chmod +x .agents/scripts/shared-constants.sh
+          echo "=== Closing issues for completed tasks ==="
+          bash .agents/scripts/issue-sync-helper.sh close --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push new tasks as issues
+        if: steps.check-author.outputs.skip != 'true'
+        run: |
+          echo "=== Creating issues for new tasks ==="
+          bash .agents/scripts/issue-sync-helper.sh push --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enrich plan-linked issues
+        if: steps.check-author.outputs.skip != 'true'
+        run: |
+          echo "=== Enriching plan-linked issues ==="
+          bash .agents/scripts/issue-sync-helper.sh enrich --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull any missing refs back to TODO.md
+        if: steps.check-author.outputs.skip != 'true'
+        run: |
+          echo "=== Pulling issue refs to TODO.md ==="
+          bash .agents/scripts/issue-sync-helper.sh pull --verbose || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and push TODO.md updates
+        if: steps.check-author.outputs.skip != 'true'
+        run: |
+          if git diff --quiet TODO.md 2>/dev/null; then
+            echo "No TODO.md changes to commit"
+          else
+            git add TODO.md
+            git commit -m "chore: sync GitHub issue refs to TODO.md [skip ci]"
+            # Retry loop for concurrent pushes
+            for i in 1 2 3; do
+              echo "Push attempt $i..."
+              git pull --rebase origin main || true
+              if git push; then
+                echo "Push succeeded on attempt $i"
+                exit 0
+              fi
+              echo "Push failed, retrying..."
+              sleep $((i * 3))
+            done
+            echo "All push attempts failed"
+            exit 1
+          fi
+
+      - name: Show sync status
+        if: steps.check-author.outputs.skip != 'true'
+        run: |
+          bash .agents/scripts/issue-sync-helper.sh status || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync-on-issue:
+    name: Sync GitHub Issue → TODO.md
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: issue-sync-issue-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: write
+      issues: read
+
+    steps:
+      - name: Check issue title format
+        id: check-issue
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Note: ISSUE_TITLE passed via env to prevent shell injection from
+          # untrusted input (backticks in titles cause `command not found` errors)
+          if echo "$ISSUE_TITLE" | grep -qE '^t[0-9]+'; then
+            echo "sync=true" >> "$GITHUB_OUTPUT"
+            TASK_ID=$(echo "$ISSUE_TITLE" | grep -oE '^t[0-9]+(\.[0-9]+)*')
+            echo "task_id=$TASK_ID" >> "$GITHUB_OUTPUT"
+            echo "Issue #$ISSUE_NUMBER matches task $TASK_ID"
+          else
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+            echo "Issue #$ISSUE_NUMBER does not have t-number prefix, skipping"
+          fi
+
+      - name: Checkout
+        if: steps.check-issue.outputs.sync == 'true'
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        if: steps.check-issue.outputs.sync == 'true'
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Sync issue ref to TODO.md
+        if: steps.check-issue.outputs.sync == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TASK_ID: ${{ steps.check-issue.outputs.task_id }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          chmod +x .agents/scripts/issue-sync-helper.sh
+          chmod +x .agents/scripts/shared-constants.sh
+          echo "=== New issue opened: ${TASK_ID} (#${ISSUE_NUMBER}) ==="
+          bash .agents/scripts/issue-sync-helper.sh pull --verbose || true
+
+      - name: Commit and push TODO.md updates
+        if: steps.check-issue.outputs.sync == 'true'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          if git diff --quiet TODO.md 2>/dev/null; then
+            echo "No TODO.md changes to commit"
+          else
+            git add TODO.md
+            git commit -m "chore: sync ref:GH#${ISSUE_NUMBER} to TODO.md [skip ci]"
+            for i in 1 2 3; do
+              echo "Push attempt $i..."
+              git pull --rebase origin main || true
+              if git push; then
+                echo "Push succeeded on attempt $i"
+                exit 0
+              fi
+              sleep $((i * 3))
+            done
+            echo "All push attempts failed"
+            exit 1
+          fi
+
+  manual-sync:
+    name: Manual Sync
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: issue-sync-manual
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Run sync command
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SYNC_COMMAND: ${{ github.event.inputs.command }}
+        run: |
+          chmod +x .agents/scripts/issue-sync-helper.sh
+          chmod +x .agents/scripts/shared-constants.sh
+          echo "=== Running: issue-sync-helper.sh $SYNC_COMMAND ==="
+          bash .agents/scripts/issue-sync-helper.sh "$SYNC_COMMAND" --verbose
+
+      - name: Commit and push TODO.md updates
+        if: github.event.inputs.command == 'pull' || github.event.inputs.command == 'push'
+        env:
+          SYNC_COMMAND: ${{ github.event.inputs.command }}
+        run: |
+          if git diff --quiet TODO.md 2>/dev/null; then
+            echo "No TODO.md changes to commit"
+          else
+            git add TODO.md
+            git commit -m "chore: manual issue sync ($SYNC_COMMAND) [skip ci]"
+            for i in 1 2 3; do
+              git pull --rebase origin main || true
+              if git push; then
+                exit 0
+              fi
+              sleep $((i * 3))
+            done
+            exit 1
+          fi
+
+  # =========================================================================
+  # t1339: Sync issue hygiene on PR merge
+  # =========================================================================
+  # When a PR merges to main, this job:
+  #   1. Extracts task ID from PR title (tNNN: ... pattern)
+  #   2. Finds linked issues (from PR body Closes/Fixes/Resolves #NNN, or by task ID)
+  #   3. Posts a closing comment with PR link
+  #   4. Applies status:done label, removes stale status labels
+  #   5. Updates TODO.md with pr:#NNN proof-log and marks task [x]
+  #
+  # This ensures all closing paths (interactive, worker, pulse) get the same
+  # hygiene treatment — previously only the TODO.md push path ran issue-sync.
+  sync-on-pr-merge:
+    name: Sync Issue Hygiene on PR Merge
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: issue-sync-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      # Security: This job uses pull_request_target to get write permissions for
+      # fork PRs. It only checks out ref:main (base branch), never fork code.
+      # Event metadata (PR title, body, number) is used for issue hygiene only.
+      - name: Extract task ID and collect linked issues
+        id: extract
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Extract task ID from PR title (e.g., "t1329: Cross-review judge pipeline")
+          TASK_ID=""
+          if echo "$PR_TITLE" | grep -qE '^t[0-9]+'; then
+            TASK_ID=$(echo "$PR_TITLE" | grep -oE '^t[0-9]+(\.[0-9]+)*')
+          fi
+          echo "task_id=$TASK_ID" >> "$GITHUB_OUTPUT"
+
+          # Collect linked issue numbers from PR body (Closes #NNN, Fixes #NNN, Resolves #NNN)
+          LINKED_ISSUES=""
+          if [[ -n "$PR_BODY" ]]; then
+            LINKED_ISSUES=$(echo "$PR_BODY" | grep -oiE '(closes?|fixes?|resolves?)[[:space:]]*#[0-9]+' | grep -oE '[0-9]+' | sort -u | tr '\n' ' ' || true)
+          fi
+          echo "linked_issues=$LINKED_ISSUES" >> "$GITHUB_OUTPUT"
+
+          # Determine if we have anything to process
+          if [[ -n "$TASK_ID" || -n "$LINKED_ISSUES" ]]; then
+            echo "has_work=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_work=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "PR #$PR_NUMBER: task_id=$TASK_ID linked_issues=$LINKED_ISSUES"
+
+      - name: Find issue by task ID (fallback)
+        id: find-issue
+        if: steps.extract.outputs.has_work == 'true' && steps.extract.outputs.task_id != ''
+        env:
+          TASK_ID: ${{ steps.extract.outputs.task_id }}
+          LINKED_ISSUES: ${{ steps.extract.outputs.linked_issues }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # If no explicit Closes #NNN in PR body, search for the issue by task ID in title
+          if [[ -z "$LINKED_ISSUES" ]]; then
+            FOUND=$(gh issue list --repo "$REPO" --state all --search "${TASK_ID}:" --json number,title --limit 5 \
+              | jq -r --arg tid "$TASK_ID" '[.[] | select(.title | test("^" + $tid + "[.:\\s]"))] | .[0].number // empty')
+            if [[ -n "$FOUND" && "$FOUND" != "null" ]]; then
+              echo "found_issues=$FOUND" >> "$GITHUB_OUTPUT"
+              echo "Found issue #$FOUND for task $TASK_ID"
+            else
+              echo "found_issues=" >> "$GITHUB_OUTPUT"
+              echo "No issue found for task $TASK_ID"
+            fi
+          else
+            echo "found_issues=" >> "$GITHUB_OUTPUT"
+            echo "Using linked issues from PR body: $LINKED_ISSUES"
+          fi
+
+      - name: Apply closing hygiene to linked issues
+        if: steps.extract.outputs.has_work == 'true'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          LINKED_ISSUES: ${{ steps.extract.outputs.linked_issues }}
+          FOUND_ISSUES: ${{ steps.find-issue.outputs.found_issues }}
+          TASK_ID: ${{ steps.extract.outputs.task_id }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Merge all issue numbers (from PR body + fallback search)
+          ALL_ISSUES="$LINKED_ISSUES $FOUND_ISSUES"
+          ALL_ISSUES=$(echo "$ALL_ISSUES" | tr ' ' '\n' | sort -u | { grep -v '^$' || true; } | tr '\n' ' ')
+
+          if [[ -z "$ALL_ISSUES" ]]; then
+            echo "No linked issues found — skipping closing hygiene"
+            exit 0
+          fi
+
+          echo "Processing issues: $ALL_ISSUES"
+
+          for ISSUE_NUM in $ALL_ISSUES; do
+            echo "--- Issue #$ISSUE_NUM ---"
+
+            # Post closing comment if none exists from this PR
+            EXISTING_COMMENT=$(gh api "repos/${REPO}/issues/${ISSUE_NUM}/comments" \
+              --jq "[.[] | select(.body | test(\"Completed via.*PR #${PR_NUMBER}\"))] | length" 2>/dev/null || echo "0")
+
+            if [[ "$EXISTING_COMMENT" == "0" ]]; then
+              TASK_REF=""
+              if [[ -n "$TASK_ID" ]]; then
+                TASK_REF=" Task $TASK_ID"
+              fi
+              gh issue comment "$ISSUE_NUM" --repo "$REPO" --body "Completed via [PR #${PR_NUMBER}](${PR_URL}).${TASK_REF} merged to main."
+              echo "Posted closing comment on #$ISSUE_NUM"
+            else
+              echo "Closing comment already exists on #$ISSUE_NUM"
+            fi
+
+            # Apply status:done label (create if needed)
+            gh label create "status:done" --color "6F42C1" --description "Task is complete" --repo "$REPO" --force 2>/dev/null || true
+            gh issue edit "$ISSUE_NUM" --repo "$REPO" --add-label "status:done" 2>/dev/null || true
+
+            # Remove stale status labels
+            for STALE_LABEL in "status:available" "status:queued" "status:claimed" "status:in-review" "status:in-progress" "status:blocked" "status:verify-failed"; do
+              gh issue edit "$ISSUE_NUM" --repo "$REPO" --remove-label "$STALE_LABEL" 2>/dev/null || true
+            done
+
+            echo "Updated labels on #$ISSUE_NUM (added status:done, removed stale)"
+          done
+
+      - name: Checkout repo for TODO.md update
+        if: steps.extract.outputs.task_id != ''
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: main
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update TODO.md proof-log
+        if: steps.extract.outputs.task_id != ''
+        env:
+          TASK_ID: ${{ steps.extract.outputs.task_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          TODAY=$(date +%Y-%m-%d)
+          PROOF="pr:#${PR_NUMBER} completed:${TODAY}"
+
+          # Check if task exists as unchecked in TODO.md
+          if ! grep -qE "^[[:space:]]*- \[ \] ${TASK_ID} " TODO.md; then
+            echo "Task $TASK_ID not found as unchecked in TODO.md — skipping proof-log"
+            # May already be [x], or may not exist in this repo's TODO.md
+            exit 0
+          fi
+
+          # Check if already marked complete with this PR
+          if grep -qE "^[[:space:]]*- \[x\] ${TASK_ID} .*pr:#${PR_NUMBER}" TODO.md; then
+            echo "Task $TASK_ID already has proof-log for PR #${PR_NUMBER}"
+            exit 0
+          fi
+
+          # Mark complete: [ ] -> [x], append proof-log
+          sed -i -E "s/^([[:space:]]*- )\[ \] (${TASK_ID} .*)\$/\1[x] \2 ${PROOF}/" TODO.md
+
+          # Verify the change was made
+          if ! grep -qE "^[[:space:]]*- \[x\] ${TASK_ID} .*pr:#${PR_NUMBER}" TODO.md; then
+            echo "::warning::Failed to update TODO.md for $TASK_ID — sed pattern did not match"
+            exit 0
+          fi
+
+          echo "Marked $TASK_ID complete with proof-log: $PROOF"
+
+          # Commit and push
+          git add TODO.md
+          git commit -m "chore: mark $TASK_ID complete ($PROOF) [skip ci]"
+
+          for i in 1 2 3; do
+            echo "Push attempt $i..."
+            git pull --rebase origin main || true
+            if git push; then
+              echo "Push succeeded on attempt $i"
+              exit 0
+            fi
+            sleep $((i * 3))
+          done
+          echo "::warning::Could not push TODO.md proof-log update (branch protection). Hygiene completed successfully."
+
+  # =========================================================================
+  # t1339: Apply conventional-commit labels to PRs
+  # t3851: Fixed — uses pull_request_target for fork PR write permissions
+  # t3862: Added GH#NNNN: prefix stripping, graceful permission failure
+  # =========================================================================
+  # Parses the PR title prefix (feat:, fix:, docs:, etc.) and applies
+  # the corresponding GitHub label. Runs on PR open and title edit.
+  # Uses pull_request_target (not pull_request) so the GITHUB_TOKEN has
+  # write access even for PRs from forks.
+  # Strips task ID prefixes (t1234:, GH#1234:) before extracting the type.
+  label-pr:
+    name: Label PR from Conventional Commit
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.merged != true &&
+      (github.event.action == 'opened' || github.event.action == 'edited')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      # Security: This job uses pull_request_target to get write permissions for
+      # fork PRs. It ONLY reads event metadata (PR title, number) — it never
+      # checks out or executes code from the PR head branch.
+      - name: Apply label from PR title prefix
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract conventional commit prefix from PR title
+          # Supports: feat, fix, docs, refactor, chore, perf, test, ci, build, style
+          # Also supports task-prefixed titles: "t1234: feat: ..." or "GH#1234: Fix ..."
+          TITLE="$PR_TITLE"
+
+          # Strip task ID prefixes if present:
+          #   - "t1234: " or "t1234.5: " (internal task IDs)
+          #   - "GH#1234: " (GitHub issue references)
+          TITLE=$(echo "$TITLE" | sed -E 's/^(t[0-9]+(\.[0-9]+)*|GH#[0-9]+):[[:space:]]*//')
+
+          # Extract the conventional commit type (case-insensitive)
+          # Matches "feat:", "fix:", "Fix ", "Add ", etc. — colon or space after prefix
+          PREFIX=$(echo "$TITLE" | grep -oiE '^(feat|fix|docs|refactor|chore|perf|test|ci|build|style|hotfix|bugfix|add|update|enhance)[:(! ]' | sed 's/[:(! ]$//' | tr '[:upper:]' '[:lower:]' || true)
+
+          if [[ -z "$PREFIX" ]]; then
+            echo "No conventional commit prefix found in: $PR_TITLE"
+            exit 0
+          fi
+
+          # Map prefix to GitHub label
+          case "$PREFIX" in
+            feat|add)          LABEL="enhancement" ;;
+            fix|bugfix|hotfix) LABEL="bug" ;;
+            docs)              LABEL="documentation" ;;
+            refactor)          LABEL="refactor" ;;
+            chore)             LABEL="chore" ;;
+            perf)              LABEL="performance" ;;
+            test)              LABEL="testing" ;;
+            ci|build)          LABEL="ci" ;;
+            style)             LABEL="style" ;;
+            update|enhance)    LABEL="enhancement" ;;
+            *)                 LABEL="" ;;
+          esac
+
+          if [[ -n "$LABEL" ]]; then
+            # Create label if it doesn't exist (idempotent)
+            gh label create "$LABEL" --repo "$REPO" --force 2>/dev/null || true
+            # Apply label — graceful failure if token lacks write permissions
+            # (e.g., stale runs from before pull_request_target migration)
+            if ! gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$LABEL" 2>&1; then
+              echo "::warning::Could not apply label '$LABEL' to PR #$PR_NUMBER (insufficient permissions). Re-run this check to pick up the latest workflow permissions."
+              exit 0
+            fi
+            echo "Applied label '$LABEL' to PR #$PR_NUMBER (prefix: $PREFIX)"
+          fi
+
+  check-issue-link:
+    name: Check PR-Issue Linkage
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.merged != true &&
+      (github.event.action == 'opened' || github.event.action == 'edited')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
+
+    steps:
+      # Security: This job uses pull_request_target to get write permissions for
+      # fork PRs. It ONLY reads event metadata (PR title, body, number) — it never
+      # checks out or executes code from the PR head branch.
+      - name: Check for issue reference in PR body
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Skip PRs that don't need issue linkage
+          if echo "$PR_TITLE" | grep -qiE '^(chore\(release\)|release:)'; then
+            echo "Release PR — issue link not required"
+            exit 0
+          fi
+
+          # Check for GitHub closing keywords or ref:GH# pattern
+          if echo "$PR_BODY" | grep -qiE '(closes|fixes|resolves)[[:space:]]+#[0-9]+'; then
+            echo "PR body contains issue closing keyword"
+            exit 0
+          fi
+
+          if echo "$PR_BODY" | grep -qE 'ref:GH#[0-9]+'; then
+            echo "PR body contains ref:GH# reference"
+            exit 0
+          fi
+
+          # Check if a task ID or GH# reference in the title has a matching open issue
+          TASK_ID=$(echo "$PR_TITLE" | grep -oE '^t[0-9]+(\.[0-9]+)*' || true)
+          GH_REF=$(echo "$PR_TITLE" | grep -oE '^GH#[0-9]+' | sed 's/GH#//' || true)
+          if [[ -n "$GH_REF" ]]; then
+            # GH#NNNN: prefix directly references the issue number
+            ISSUE_NUM="$GH_REF"
+          elif [[ -n "$TASK_ID" ]]; then
+            ISSUE_NUM=$(gh issue list --repo "$REPO" --state open --search "${TASK_ID}:" --json number --jq '.[0].number' 2>/dev/null || true)
+          else
+            ISSUE_NUM=""
+          fi
+          if [[ -n "$ISSUE_NUM" && "$ISSUE_NUM" != "null" ]]; then
+            echo "::warning::PR references issue #$ISSUE_NUM but no closing keyword in body. Add 'Closes #$ISSUE_NUM' to the PR body for automatic linkage."
+            # Post a one-time comment (check if we already commented)
+            # Graceful failure if token lacks write permissions
+            EXISTING=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json comments --jq '[.comments[] | select(.body | contains("issue-link-check"))] | length' 2>/dev/null || echo "0")
+            if [[ "$EXISTING" == "0" ]]; then
+              gh pr comment "$PR_NUMBER" --repo "$REPO" --body "<!-- issue-link-check -->
+          **Missing issue link.** This PR references issue #$ISSUE_NUM, but the PR body doesn't contain a closing keyword.
+
+          Add \`Closes #$ISSUE_NUM\` to the PR description so GitHub auto-links and auto-closes the issue on merge." 2>/dev/null || echo "::warning::Could not post comment (insufficient permissions)"
+            fi
+            exit 0
+          fi
+
+          echo "No issue reference found — this is acceptable for chore/docs PRs without tracked issues"
+
+  guard-persistent-issues:
+    name: Reopen Persistent Issues
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      issues: write
+
+    steps:
+      - name: Reopen if persistent label
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if echo "$ISSUE_LABELS" | grep -q 'persistent'; then
+            gh issue reopen "$ISSUE_NUMBER" --repo "$REPO" \
+              --comment "Auto-reopened: this issue has the \`persistent\` label and should not be closed. If closure was intentional, remove the \`persistent\` label first."
+            # Remove status:done if it was added
+            gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --remove-label "status:done" 2>/dev/null || true
+            echo "Reopened persistent issue #$ISSUE_NUMBER"
+          else
+            echo "Issue #$ISSUE_NUMBER is not persistent — closure allowed"
+          fi
