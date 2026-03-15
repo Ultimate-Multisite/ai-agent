@@ -8,6 +8,7 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import STORE_NAME from '../store';
+import ErrorBoundary from './error-boundary';
 import ProviderSelector from './provider-selector';
 import MessageList from './message-list';
 import MessageInput from './message-input';
@@ -25,37 +26,45 @@ export default function ChatPanel( { compact = false, onSlashCommand } ) {
 	);
 
 	return (
-		<div
-			className={ `ai-agent-chat-panel ${ compact ? 'is-compact' : '' }` }
-		>
-			<div className="ai-agent-header">
-				<ProviderSelector compact={ compact } />
-				{ debugMode && (
-					<span className="ai-agent-debug-badge">
-						{ __( 'DEBUG', 'ai-agent' ) }
-					</span>
+		<ErrorBoundary label={ __( 'Chat', 'ai-agent' ) }>
+			<div
+				className={ `ai-agent-chat-panel ${
+					compact ? 'is-compact' : ''
+				}` }
+			>
+				<div className="ai-agent-header">
+					<ProviderSelector compact={ compact } />
+					{ debugMode && (
+						<span className="ai-agent-debug-badge">
+							{ __( 'DEBUG', 'ai-agent' ) }
+						</span>
+					) }
+				</div>
+				<ContextIndicator />
+				<ErrorBoundary label={ __( 'Message list', 'ai-agent' ) }>
+					<MessageList />
+				</ErrorBoundary>
+				<ErrorBoundary label={ __( 'Message input', 'ai-agent' ) }>
+					<MessageInput
+						compact={ compact }
+						onSlashCommand={ onSlashCommand }
+					/>
+				</ErrorBoundary>
+				{ pendingConfirmation && (
+					<ToolConfirmationDialog
+						confirmation={ pendingConfirmation }
+						onConfirm={ ( alwaysAllow ) =>
+							confirmToolCall(
+								pendingConfirmation.jobId,
+								alwaysAllow
+							)
+						}
+						onReject={ () =>
+							rejectToolCall( pendingConfirmation.jobId )
+						}
+					/>
 				) }
 			</div>
-			<ContextIndicator />
-			<MessageList />
-			<MessageInput
-				compact={ compact }
-				onSlashCommand={ onSlashCommand }
-			/>
-			{ pendingConfirmation && (
-				<ToolConfirmationDialog
-					confirmation={ pendingConfirmation }
-					onConfirm={ ( alwaysAllow ) =>
-						confirmToolCall(
-							pendingConfirmation.jobId,
-							alwaysAllow
-						)
-					}
-					onReject={ () =>
-						rejectToolCall( pendingConfirmation.jobId )
-					}
-				/>
-			) }
-		</div>
+		</ErrorBoundary>
 	);
 }

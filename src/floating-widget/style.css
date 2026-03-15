@@ -217,9 +217,11 @@
 	gap: 6px;
 }
 
+/* stylelint-disable selector-class-pattern -- WordPress component class */
 .ai-agent-provider-selector.is-compact .components-base-control__label {
 	display: none;
 }
+/* stylelint-enable selector-class-pattern */
 
 /* Bubbles (needed for floating widget) */
 .ai-agent-floating-panel .ai-agent-user {
@@ -505,4 +507,26 @@
 .ai-agent-suggestion-chip.components-button:hover {
 	background: #e0e0e0;
 	border-color: #bbb;
+}
+
+/* Error boundary fallback */
+.ai-agent-error-boundary {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 24px 16px;
+	text-align: center;
+	color: #757575;
+}
+
+.ai-agent-error-boundary-message {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.ai-agent-error-boundary-retry.components-button {
+	font-size: 13px;
 }
